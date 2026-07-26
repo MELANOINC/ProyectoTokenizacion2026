@@ -1,0 +1,119 @@
+@import "tailwindcss";
+
+:root {
+  --ink: #101816;
+  --ink-soft: #2a3834;
+  --brass: #b8893a;
+  --brass-deep: #8f6a2a;
+  --limestone: #efe8db;
+  --mist: #d7e0dc;
+  --slate: #4a5c56;
+  --paper: #f7f3ec;
+  --line: rgba(16, 24, 22, 0.12);
+  --background: var(--paper);
+  --foreground: var(--ink);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-brass: var(--brass);
+  --color-brass-deep: var(--brass-deep);
+  --color-limestone: var(--limestone);
+  --color-mist: var(--mist);
+  --color-slate: var(--slate);
+  --color-paper: var(--paper);
+  --color-line: var(--line);
+  --font-sans: var(--font-body);
+  --font-display: var(--font-display);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-body), "Segoe UI", sans-serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+::selection {
+  background: color-mix(in oklab, var(--brass) 40%, white);
+  color: var(--ink);
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ken {
+  from {
+    transform: scale(1.08) translate3d(0, 0, 0);
+  }
+  to {
+    transform: scale(1.16) translate3d(-1.5%, -1%, 0);
+  }
+}
+
+@keyframes draw {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.animate-rise {
+  animation: rise 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-rise-delay {
+  animation: rise 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both;
+}
+
+.animate-rise-late {
+  animation: rise 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.3s both;
+}
+
+.hero-pan {
+  animation: ken 18s ease-out forwards;
+}
+
+.cta-line {
+  transform-origin: left;
+  animation: draw 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.45s both;
+}
+
+.grain {
+  background-image:
+    radial-gradient(circle at 20% 20%, rgba(184, 137, 58, 0.12), transparent 40%),
+    radial-gradient(circle at 80% 0%, rgba(74, 92, 86, 0.14), transparent 35%),
+    linear-gradient(160deg, #f7f3ec 0%, #e7eee9 45%, #d9e2dd 100%);
+}
+
+.panel {
+  border: 1px solid var(--line);
+  background: rgba(247, 243, 236, 0.82);
+  backdrop-filter: blur(8px);
+}
