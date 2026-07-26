@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 const links = [
+  { href: "/dashboard/contratos", label: "Contratos" },
   { href: "/dashboard", label: "Resumen" },
   { href: "/dashboard/admin", label: "Admin" },
   { href: "/dashboard/emisor", label: "Emisor" },

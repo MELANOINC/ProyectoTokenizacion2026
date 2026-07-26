@@ -5,14 +5,18 @@
   "description": "NOTORIUS™ — Smart Contract Engine + Tokenization Platform",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "npm run compile:contracts && next build",
     "start": "next start -H 0.0.0.0 -p ${PORT:-3000}",
-    "lint": "eslint"
+    "lint": "eslint",
+    "compile:contracts": "node scripts/compile-contracts.mjs"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.101.4",
     "next": "16.2.12",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "viem": "^2.55.8",
+    "wagmi": "^3.7.4",
     "zod": "^4.4.3"
   },
   "devDependencies": {
@@ -22,6 +26,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.12",
+    "solc": "^0.8.36",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

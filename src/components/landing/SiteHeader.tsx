@@ -18,10 +18,10 @@ export function SiteHeader() {
             Ciclo de vida
           </Link>
           <Link
-            href="/dashboard"
+            href="/dashboard/contratos"
             className="border border-white/35 px-4 py-2 text-white transition hover:border-white hover:bg-white/10"
           >
-            Abrir dashboard
+            Conectar MetaMask
           </Link>
         </nav>
       </div>

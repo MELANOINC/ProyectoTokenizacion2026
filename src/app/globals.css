@@ -117,3 +117,34 @@ a {
   background: rgba(247, 243, 236, 0.82);
   backdrop-filter: blur(8px);
 }
+
+.field {
+  width: 100%;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.72);
+  padding: 0.55rem 0.75rem;
+  color: var(--ink);
+  outline: none;
+}
+
+.field:focus {
+  border-color: var(--brass);
+}
+
+.btn-primary {
+  background: var(--ink);
+  color: var(--limestone);
+  padding: 0.65rem 1rem;
+  font-weight: 600;
+  transition: background 150ms ease;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--brass-deep);
+  color: white;
+}
+
+.btn-primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}

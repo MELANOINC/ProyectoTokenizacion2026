@@ -33,16 +33,16 @@ export function Hero() {
         </p>
         <div className="animate-rise-late mt-8 flex flex-wrap items-center gap-4">
           <Link
-            href="/dashboard/emisor"
+            href="/dashboard/contratos"
             className="bg-[var(--brass)] px-6 py-3 font-semibold text-[var(--ink)] transition hover:bg-[var(--brass-deep)] hover:text-white"
           >
-            Emitir activo
+            Firmar y desplegar
           </Link>
           <Link
             href="/dashboard"
             className="relative px-2 py-3 text-white/90 transition hover:text-white"
           >
-            Ver paneles
+            Ver dashboard
             <span className="cta-line absolute bottom-2 left-2 right-2 h-px bg-white/80" />
           </Link>
         </div>

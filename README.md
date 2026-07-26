@@ -25,11 +25,24 @@ Open [http://localhost:3000](http://localhost:3000).
 | Path | Role |
 |---|---|
 | `/` | Landing comercial |
+| `/dashboard/contratos` | MetaMask + Polygon: firmar EIP-712, deploy Solidity, KYC, whitelist, mint, transfer |
 | `/dashboard` | Resumen operativo |
-| `/dashboard/admin` | KYC + whitelist + historial |
-| `/dashboard/emisor` | Alta de activos, mint, transfers |
-| `/dashboard/inversores` | Registro y whitelist |
+| `/dashboard/admin` | KYC + whitelist + historial (demo API) |
+| `/dashboard/emisor` | Alta de activos, mint, transfers (demo API) |
+| `/dashboard/inversores` | Registro y whitelist (demo API) |
 | `/docs` | Índice de documentación |
+
+### On-chain (MetaMask / Polygon)
+
+1. Abrí `/dashboard/contratos`
+2. Conectá MetaMask (Amoy recomendado)
+3. Firmá el acuerdo EIP-712
+4. Deploy `IdentityRegistry` → Deploy `SecurityToken`
+5. Registrar KYC → Whitelist → Mint → Transfer
+
+```bash
+npm run compile:contracts   # regenera ABI + bytecode en src/lib/web3/artifacts
+```
 
 ## API
 
