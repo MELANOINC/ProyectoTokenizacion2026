@@ -71,20 +71,20 @@ export function ActionForm({
             type={field.type ?? "text"}
             placeholder={field.placeholder}
             required={field.required !== false}
-            className="mt-1 w-full border border-[var(--line)] bg-white/70 px-3 py-2 text-[var(--ink)] outline-none focus:border-[var(--brass)]"
+            className="field mt-1"
           />
         </label>
       ))}
       <button
         type="submit"
         disabled={pending}
-        className="bg-[var(--ink)] px-4 py-2 font-semibold text-[var(--limestone)] transition hover:bg-[var(--brass-deep)] disabled:opacity-60"
+        className="btn-primary disabled:opacity-60"
       >
         {pending ? "Procesando…" : actionLabel}
       </button>
       {status ? (
         <p
-          className={`text-sm ${status === "OK" ? "text-emerald-800" : "text-red-800"}`}
+          className={`text-sm ${status === "OK" ? "text-[var(--mint)]" : "text-[#f97066]"}`}
         >
           {status === "OK" ? "Operación registrada." : status}
         </p>

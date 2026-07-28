@@ -121,7 +121,7 @@ export function WalletBar() {
               type="button"
               onClick={onConnect}
               disabled={isPending || status === "connecting"}
-              className="bg-[var(--ink)] px-4 py-2 text-sm font-semibold text-[var(--limestone)] transition hover:bg-[var(--brass-deep)] disabled:opacity-60"
+              className="btn-primary text-sm disabled:opacity-60"
             >
               {isPending || status === "connecting"
                 ? "Conectando…"
@@ -177,7 +177,7 @@ export function WalletBar() {
       ) : null}
 
       {errorMessage ? (
-        <p className="border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-900">
+        <p className="border border-[#8a3b3b] bg-[#2a1515] px-3 py-2 text-sm text-[#fca5a5]">
           {errorMessage}
         </p>
       ) : null}

@@ -62,12 +62,12 @@ function StatusBanner({
   if (!message) return null;
   const styles =
     tone === "error"
-      ? "border-red-300 bg-red-50 text-red-900"
+      ? "border-[#8a3b3b] bg-[#2a1515] text-[#fca5a5]"
       : tone === "ok"
-        ? "border-emerald-300 bg-emerald-50 text-emerald-900"
+        ? "border-[var(--mint-b)] bg-[var(--mint-bg)] text-[var(--mint)]"
         : tone === "pending"
-          ? "border-amber-300 bg-amber-50 text-amber-950"
-          : "border-[var(--line)] bg-white/70 text-[var(--ink-soft)]";
+          ? "border-[var(--gold-lo)] bg-[rgba(194,153,63,0.08)] text-[var(--gold-hi)]"
+          : "border-[var(--line)] bg-[var(--s1)] text-[var(--w2)]";
   return <p className={`border px-3 py-2 text-sm ${styles}`}>{message}</p>;
 }
 
@@ -474,8 +474,8 @@ export function ContractStudio() {
               key={step.id}
               className={`border px-3 py-3 text-sm ${
                 step.done
-                  ? "border-emerald-400 bg-emerald-50 text-emerald-900"
-                  : "border-[var(--line)] text-[var(--ink-soft)]"
+                  ? "border-[var(--mint-b)] bg-[var(--mint-bg)] text-[var(--mint)]"
+                  : "border-[var(--line)] text-[var(--w2)]"
               }`}
             >
               <span className="font-[family-name:var(--font-display)] font-semibold">
@@ -490,7 +490,7 @@ export function ContractStudio() {
       <StatusBanner tone={status.tone} message={status.message} />
 
       {!networkReady ? (
-        <p className="border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+        <p className="border border-[var(--gold-lo)] bg-[rgba(194,153,63,0.08)] px-4 py-3 text-sm text-[var(--gold-hi)]">
           Conectá MetaMask y seleccioná <strong>Polygon Amoy</strong> (recomendado)
           o <strong>Polygon Mainnet</strong> para habilitar despliegue y firma.
         </p>

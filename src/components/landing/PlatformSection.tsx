@@ -1,46 +1,54 @@
+import Link from "next/link";
+
 const capabilities = [
   {
-    title: "Smart contracts auditables",
-    body: "Plantillas ERC-3643 para security tokens sobre Polygon y Base.",
+    title: "Firma EIP-712",
+    body: "Acuerdo de tokenización firmado con MetaMask antes del deploy.",
   },
   {
-    title: "Emisión y mint controlado",
-    body: "Solo wallets whitelistadas reciben tokens. Supply total siempre visible.",
+    title: "Security tokens",
+    body: "IdentityRegistry + SecurityToken (estilo ERC-3643) en Polygon.",
   },
   {
-    title: "KYC + inversores",
-    body: "Registro, aprobación y trazabilidad listas para integrar un proveedor regulado.",
+    title: "KYC + whitelist",
+    body: "Solo wallets verificadas reciben y transfieren tokens.",
   },
   {
-    title: "Operación para emisores",
-    body: "Dashboard de emisión, transferencias controladas e historial on-chain.",
+    title: "Emisión controlada",
+    body: "Mint, supply total e historial on-chain para emisores e inversores.",
   },
 ];
 
 export function PlatformSection() {
   return (
-    <section id="plataforma" className="grain relative py-24 md:py-32">
+    <section id="plataforma" className="border-y border-[var(--line)] bg-[var(--s1)] py-24 md:py-28">
       <div className="mx-auto max-w-6xl px-6 md:px-10">
-        <p className="text-sm font-semibold tracking-[0.22em] text-[var(--slate)] uppercase">
+        <p className="font-mono text-xs tracking-[0.22em] text-[var(--gold)] uppercase">
           Plataforma
         </p>
-        <h2 className="mt-3 max-w-2xl font-[family-name:var(--font-display)] text-4xl font-bold tracking-tight text-[var(--ink)] md:text-5xl">
-          Ciclo completo de activos tokenizados.
+        <h2 className="mt-3 max-w-2xl font-[family-name:var(--font-display)] text-4xl font-bold tracking-tight text-[var(--w)] md:text-5xl">
+          Motor completo de tokenización.
         </h2>
-        <p className="mt-4 max-w-xl text-lg text-[var(--ink-soft)]">
-          No es solo un generador de contratos: administra emisión, inversores y
-          compliance en una sola superficie.
+        <p className="mt-4 max-w-xl text-lg text-[var(--w2)]">
+          No es solo un generador de contratos: es el panel operativo para emitir
+          y administrar activos tokenizados.
         </p>
 
-        <div className="mt-14 grid gap-10 md:grid-cols-2">
+        <div className="mt-12 grid gap-8 md:grid-cols-2">
           {capabilities.map((item) => (
             <article key={item.title} className="border-t border-[var(--line)] pt-6">
-              <h3 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-[var(--ink)]">
+              <h3 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-[var(--w)]">
                 {item.title}
               </h3>
-              <p className="mt-3 max-w-md text-[var(--ink-soft)]">{item.body}</p>
+              <p className="mt-3 max-w-md text-[var(--w2)]">{item.body}</p>
             </article>
           ))}
+        </div>
+
+        <div className="mt-12">
+          <Link href="/dashboard/contratos" className="btn-primary inline-block">
+            Entrar al estudio on-chain
+          </Link>
         </div>
       </div>
     </section>

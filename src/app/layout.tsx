@@ -1,23 +1,35 @@
 import type { Metadata } from "next";
-import { Source_Sans_3, Syne } from "next/font/google";
+import { IBM_Plex_Mono, IBM_Plex_Sans, Manrope } from "next/font/google";
 import "./globals.css";
 
-const display = Syne({
+const display = Manrope({
   variable: "--font-display",
   subsets: ["latin"],
-  weight: ["600", "700", "800"],
+  weight: ["500", "600", "700", "800"],
 });
 
-const body = Source_Sans_3({
+const body = IBM_Plex_Sans({
   variable: "--font-body",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
 });
 
+const mono = IBM_Plex_Mono({
+  variable: "--font-mono",
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+});
+
 export const metadata: Metadata = {
-  title: "NOTORIUS™ — Tokenization Platform",
+  title: "NOTORIUS — Agente tokenizador de propiedades y activos | Melano Inc",
   description:
-    "Smart Contract Engine + Tokenization Platform for real estate, funds, and high-value assets.",
+    "Tokenizá propiedades y activos reales con smart contracts, KYC, whitelist y emisión controlada. Hub Melano: Alenya capta, Luxia convierte, NOTORIUS tokeniza.",
+  openGraph: {
+    title: "NOTORIUS — Agente tokenizador | Melano Inc",
+    description:
+      "Smart Contract Engine + Tokenization Platform para inmobiliarias y emisores.",
+    type: "website",
+  },
 };
 
 export default function RootLayout({
@@ -26,7 +38,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es" className={`${display.variable} ${body.variable} h-full`}>
+    <html
+      lang="es"
+      className={`${display.variable} ${body.variable} ${mono.variable} h-full`}
+    >
       <body className="min-h-full antialiased">{children}</body>
     </html>
   );

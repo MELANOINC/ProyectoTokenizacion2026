@@ -1,8 +1,10 @@
 # NOTORIUS™
 
-**Smart Contract Engine + Tokenization Platform** — MELANO INC
+**Agente tokenizador de propiedades y activos** — MELANO INC
 
-Plataforma para administrar el ciclo de vida de activos tokenizados: propiedades, desarrollos inmobiliarios, participaciones, fondos y activos de alto valor.
+Landing + plataforma on-chain alineadas al estándar visual del hub Melano (`luxia.melanoinc.com` · `alenya.melanoinc.com`).
+
+Hub: **aLENYA** capta → **LUXIA** convierte → **NOTORIUS** tokeniza.
 
 ## Stack
 
