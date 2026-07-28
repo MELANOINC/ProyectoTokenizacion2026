@@ -26,7 +26,7 @@ export function DashboardShell({
           <div className="flex items-center gap-3">
             <Link href="/">
               <Image
-                src="/melano-m-logo-circle.png"
+                src="/melano-mark.svg"
                 alt="Melano Inc"
                 width={32}
                 height={32}

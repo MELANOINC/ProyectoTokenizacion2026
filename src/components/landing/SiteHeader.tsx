@@ -7,7 +7,7 @@ export function SiteHeader() {
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-5 md:px-10">
         <Link href="/" className="flex items-center gap-3">
           <Image
-            src="/melano-m-logo-circle.png"
+            src="/melano-mark.svg"
             alt="Melano Inc"
             width={36}
             height={36}

@@ -7,7 +7,7 @@ export function SiteFooter() {
       <div className="mx-auto flex max-w-6xl flex-col gap-8 px-6 md:flex-row md:items-end md:justify-between md:px-10">
         <div className="flex items-start gap-3">
           <Image
-            src="/melano-m-logo-circle.png"
+            src="/melano-mark.svg"
             alt="Melano Inc"
             width={40}
             height={40}
