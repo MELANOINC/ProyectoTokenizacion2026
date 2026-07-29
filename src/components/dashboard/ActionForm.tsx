@@ -31,7 +31,8 @@ export function ActionForm({
     setPending(true);
     setStatus(null);
 
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     const raw: Record<string, string> = {};
     for (const field of fields) {
       raw[field.name] = String(form.get(field.name) ?? "");
@@ -50,7 +51,7 @@ export function ActionForm({
         throw new Error(json.error ?? "Request failed");
       }
       setStatus("OK");
-      event.currentTarget.reset();
+      formElement.reset();
       onSuccess?.();
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Error");
