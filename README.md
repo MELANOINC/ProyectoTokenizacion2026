@@ -54,6 +54,8 @@ npm run compile:contracts   # regenera ABI + bytecode en src/lib/web3/artifacts
 - `POST /api/transfer`
 - `GET|POST /api/assets`
 - `GET /api/health`
+- `GET /api/health/integrations` — safe probes for optional Supabase / Mercado Pago / Hostinger (no writes)
+- `npm run probe:integrations` — same probes from CLI (loads `.env.local` overrides)
 
 Demo data is seeded in-memory (wallet `0x1111…1111` ya whitelistada sobre `asset_puerto_madero`).
 

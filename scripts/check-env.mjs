@@ -59,12 +59,29 @@ const optionalStatus = Object.fromEntries(
   optionalDocumented.map((k) => [k, present(k) ? "SET" : "MISSING"]),
 );
 
+const warnings = [];
+const hostingerHost = process.env.HOSTINGER_SSH_HOST?.trim();
+if (hostingerHost && (hostingerHost === "root" || !hostingerHost.includes("."))) {
+  warnings.push(
+    "HOSTINGER_SSH_HOST looks like a username, not a hostname — set a real FQDN/IP and put the username in HOSTINGER_SSH_USER",
+  );
+}
+if (
+  present("MERCADOPAGO_ACCESS_TOKEN") &&
+  !(present("MERCADOPAGO_CLIENT_ID") && present("MERCADOPAGO_CLIENT_SECRET"))
+) {
+  warnings.push(
+    "Prefer MERCADOPAGO_CLIENT_ID + MERCADOPAGO_CLIENT_SECRET (OAuth client_credentials); ACCESS_TOKEN alone often 403s",
+  );
+}
+
 console.log(
   JSON.stringify(
     {
       requiredByCode,
       missingRequired,
       optionalStatus,
+      warnings,
       verdict: missingRequired.length === 0 ? "GREEN" : "RED",
     },
     null,
