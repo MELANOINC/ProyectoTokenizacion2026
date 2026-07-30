@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { CTA } from "@/lib/cta";
 
 export function SiteFooter() {
   return (
@@ -23,6 +24,14 @@ export function SiteFooter() {
           </div>
         </div>
         <div className="flex flex-wrap gap-5 text-sm text-[var(--g1)]">
+          <a
+            href={CTA.calendly}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-[var(--gold)]"
+          >
+            Agendar diagnóstico
+          </a>
           <Link href="/dashboard/contratos" className="hover:text-[var(--gold)]">
             Estudio
           </Link>

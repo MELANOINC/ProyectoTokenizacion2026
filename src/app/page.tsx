@@ -1,4 +1,5 @@
 import { EcosystemSection } from "@/components/landing/EcosystemSection";
+import { GuideSection } from "@/components/landing/GuideSection";
 import { Hero } from "@/components/landing/Hero";
 import { LifecycleSection } from "@/components/landing/LifecycleSection";
 import { Marquee } from "@/components/landing/Marquee";
@@ -12,6 +13,7 @@ export default function Home() {
       <SiteHeader />
       <Hero />
       <Marquee />
+      <GuideSection />
       <EcosystemSection />
       <PlatformSection />
       <LifecycleSection />
