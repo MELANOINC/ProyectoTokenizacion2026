@@ -5,7 +5,8 @@
   "description": "NOTORIUS™ — Smart Contract Engine + Tokenization Platform",
   "scripts": {
     "dev": "next dev",
-    "build": "npm run compile:contracts && next build",
+    "build": "next build",
+    "build:full": "npm run compile:contracts && next build",
     "start": "next start -H 0.0.0.0 -p ${PORT:-3000}",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
