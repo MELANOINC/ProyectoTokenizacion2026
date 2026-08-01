@@ -1,4 +1,18 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Documentación",
+  description:
+    "Whitepaper, manual legal y documentación técnica de NOTORIUS — plataforma de tokenización Melano Inc.",
+  alternates: { canonical: "/docs" },
+  openGraph: {
+    title: "Documentación NOTORIUS",
+    description:
+      "Arquitectura, whitepaper y notas legales del agente tokenizador NOTORIUS.",
+    url: "/docs",
+  },
+};
 
 const docs = [
   {
