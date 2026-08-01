@@ -1,8 +1,7 @@
 import assert from "node:assert/strict";
-import { describe, it } from "node:test";
+import { describe, it, before } from "node:test";
 import {
   addToWhitelist,
-  createAsset,
   getSnapshot,
   mintTokens,
   registerInvestor,
@@ -10,57 +9,49 @@ import {
 } from "@/lib/store";
 
 describe("in-memory tokenization store", () => {
-  it("seeds demo asset and investor", () => {
-    const snap = getSnapshot();
-    assert.ok(snap.assets.some((a) => a.id === "asset_puerto_madero"));
-    assert.ok(snap.investors.some((i) => i.id === "inv_demo_ana"));
+  before(() => {
+    process.env.NOTORIUS_STORE = "memory";
   });
 
-  it("registers, whitelists, mints and transfers", () => {
-    const wallet = "0x3333333333333333333333333333333333333333";
-    const investor = registerInvestor({
-      name: "Audit User",
-      email: `audit-${Date.now()}@example.com`,
-      walletAddress: wallet,
-    });
-    const asset = createAsset({
-      name: "Audit Asset",
-      class: "property",
-      symbol: `AUD${Date.now().toString().slice(-4)}`,
-      totalSupply: 10_000,
-      issuerId: "issuer_audit",
-      chain: "polygon",
-    });
-    addToWhitelist({
-      investorId: investor.id,
-      assetId: asset.id,
-      walletAddress: wallet,
-    });
-    // also whitelist demo wallet as counterparty for transfer out later
-    const demo = "0x1111111111111111111111111111111111111111";
-    const demoInvestor = getSnapshot().investors.find(
-      (i) => i.walletAddress === demo,
+  it("seeds demo asset and investor", async () => {
+    const snap = await getSnapshot();
+    assert.ok(snap.assets.some((a) => a.symbol === "TNPM"));
+    assert.ok(
+      snap.investors.some(
+        (i) => i.walletAddress === "0x1111111111111111111111111111111111111111",
+      ),
     );
-    assert.ok(demoInvestor);
-    addToWhitelist({
-      investorId: demoInvestor!.id,
-      assetId: asset.id,
-      walletAddress: demo,
+  });
+
+  it("registers, whitelists, mints and transfers", async () => {
+    const snap = await getSnapshot();
+    const assetId = snap.assets[0]!.id;
+
+    const investor = await registerInvestor({
+      name: "Bruno Test",
+      email: `bruno.${Date.now()}@example.com`,
+      walletAddress: "0x2222222222222222222222222222222222222222",
     });
 
-    const mint = mintTokens({
-      assetId: asset.id,
-      toWallet: wallet,
-      amount: 100,
+    await addToWhitelist({
+      investorId: investor.id,
+      assetId,
     });
-    assert.equal(mint.amount, 100);
 
-    const xfer = transferTokens({
-      assetId: asset.id,
-      fromWallet: wallet,
-      toWallet: demo,
-      amount: 25,
+    const mint = await mintTokens({
+      assetId,
+      toWallet: investor.walletAddress,
+      amount: 10,
     });
-    assert.equal(xfer.amount, 25);
+    assert.equal(mint.amount, 10);
+
+    // Demo wallet is already whitelisted for the demo asset
+    const xfer = await transferTokens({
+      assetId,
+      fromWallet: "0x1111111111111111111111111111111111111111",
+      toWallet: investor.walletAddress,
+      amount: 5,
+    });
+    assert.equal(xfer.amount, 5);
   });
 });

@@ -3,7 +3,7 @@ import { addToWhitelist, getSnapshot } from "@/lib/store";
 import { whitelistSchema } from "@/lib/validation";
 
 export async function GET() {
-  const { whitelist } = getSnapshot();
+  const { whitelist } = await getSnapshot();
   return jsonOk({ whitelist });
 }
 
@@ -11,7 +11,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const input = whitelistSchema.parse(body);
-    const entry = addToWhitelist(input);
+    const entry = await addToWhitelist(input);
     return jsonOk({ entry }, 201);
   } catch (error) {
     return jsonError(error);

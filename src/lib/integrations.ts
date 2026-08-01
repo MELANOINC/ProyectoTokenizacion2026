@@ -33,11 +33,18 @@ function firstEnv(...names: string[]): string | undefined {
 }
 
 async function probeSupabase(): Promise<IntegrationProbe> {
-  const url = firstEnv("NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_URL");
+  const url = firstEnv(
+    "NOTORIUS_SUPABASE_URL",
+    "NEXT_PUBLIC_SUPABASE_URL",
+    "SUPABASE_URL",
+  );
   const key = firstEnv(
+    "NOTORIUS_SUPABASE_SERVICE_ROLE_KEY",
+    "NOTORIUS_SUPABASE_ANON_KEY",
     "NEXT_PUBLIC_SUPABASE_ANON_KEY",
     "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
     "SUPABASE_ANON_KEY",
+    "SUPABASE_SERVICE_ROLE_KEY",
   );
 
   if (!url || !key) {
