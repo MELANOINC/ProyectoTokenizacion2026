@@ -1,18 +1,13 @@
-import type { Metadata } from "next";
 import Link from "next/link";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { breadcrumbJsonLd, buildPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata = buildPageMetadata({
   title: "Documentación",
   description:
-    "Whitepaper, manual legal y documentación técnica de NOTORIUS — plataforma de tokenización Melano Inc.",
-  alternates: { canonical: "/docs" },
-  openGraph: {
-    title: "Documentación NOTORIUS",
-    description:
-      "Arquitectura, whitepaper y notas legales del agente tokenizador NOTORIUS.",
-    url: "/docs",
-  },
-};
+    "Whitepaper, arquitectura, contratos y notas legales de NOTORIUS: tokenización inmobiliaria y RWA con smart contracts en Polygon (Melano Inc).",
+  path: "/docs",
+});
 
 const docs = [
   {
@@ -40,6 +35,12 @@ const docs = [
 export default function DocsPage() {
   return (
     <main className="grain min-h-screen">
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: "NOTORIUS", path: "/" },
+          { name: "Documentación", path: "/docs" },
+        ])}
+      />
       <div className="mx-auto max-w-3xl px-6 py-16 md:px-10">
         <Link
           href="/"

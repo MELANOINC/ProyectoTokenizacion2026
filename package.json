@@ -12,7 +12,8 @@
     "test": "tsx --test src/**/*.test.ts",
     "check:env": "node scripts/check-env.mjs",
     "probe:integrations": "tsx scripts/probe-integrations.mjs",
-    "compile:contracts": "node scripts/compile-contracts.mjs"
+    "compile:contracts": "node scripts/compile-contracts.mjs",
+    "generate:brand-assets": "node scripts/generate-brand-assets.mjs"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.101.4",
