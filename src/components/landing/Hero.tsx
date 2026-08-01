@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CTA } from "@/lib/cta";
 
 export function Hero() {
   return (
@@ -45,9 +46,17 @@ export function Hero() {
           <Link href="/dashboard/contratos" className="btn-primary">
             Firmar y desplegar
           </Link>
-          <Link href="/dashboard" className="btn-ghost relative">
-            Abrir plataforma
+          <a
+            href={CTA.calendly}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-ghost relative"
+          >
+            Agendar diagnóstico
             <span className="cta-line absolute bottom-2 left-4 right-4 h-px bg-[var(--gold)]/70" />
+          </a>
+          <Link href="/dashboard" className="btn-ghost">
+            Abrir plataforma
           </Link>
         </div>
       </div>
