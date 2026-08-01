@@ -5,9 +5,15 @@ import type {
   KycStatus,
   MintRecord,
   TokenizedAsset,
+  TransferRecord,
+  WhitelistEntry,
 } from "@/lib/types";
 import { getSupabaseConfig } from "./config";
 import { sbFetch } from "./rest";
+
+/** Ledger rows stored in existing public.audit_logs until native tables exist. */
+const WL_ENTITY = "notorius_whitelist";
+const XFER_ENTITY = "notorius_transfer";
 
 type DbAsset = {
   id: string;
@@ -87,17 +93,29 @@ function mapKyc(value: string | null | undefined): KycStatus {
   return "pending";
 }
 
+type DbAuditLog = {
+  id: string;
+  entity_type: string;
+  entity_id: string | null;
+  action: string;
+  metadata: Record<string, unknown> | null;
+  created_at: string;
+};
+
 export async function loadPlatformFromSupabase(): Promise<{
   assets: TokenizedAsset[];
   investors: Investor[];
   mints: MintRecord[];
+  whitelist: WhitelistEntry[];
+  transfers: TransferRecord[];
 } | null> {
   const config = getSupabaseConfig();
   if (!config) return null;
 
   const companyFilter = `company_id=eq.${config.companyId}`;
 
-  const [assets, tokenizations, investors, investments] = await Promise.all([
+  const [assets, tokenizations, investors, investments, ledger] =
+    await Promise.all([
     sbFetch<DbAsset[]>(
       `/rest/v1/assets?${companyFilter}&select=*&order=created_at.desc`,
       { config },
@@ -112,6 +130,10 @@ export async function loadPlatformFromSupabase(): Promise<{
     ),
     sbFetch<DbInvestment[]>(
       `/rest/v1/investments?select=*&order=created_at.desc`,
+      { config },
+    ),
+    sbFetch<DbAuditLog[]>(
+      `/rest/v1/audit_logs?or=(entity_type.eq.${WL_ENTITY},entity_type.eq.${XFER_ENTITY})&select=*&order=created_at.desc&limit=2000`,
       { config },
     ),
   ]);
@@ -168,7 +190,93 @@ export async function loadPlatformFromSupabase(): Promise<{
       };
     });
 
-  return { assets: mappedAssets, investors: mappedInvestors, mints };
+  const whitelist: WhitelistEntry[] = ledger
+    .filter((row) => row.entity_type === WL_ENTITY && row.metadata)
+    .map((row) => {
+      const m = row.metadata ?? {};
+      return {
+        id: String(m.id ?? row.id),
+        investorId: String(m.investorId ?? ""),
+        assetId: String(m.assetId ?? row.entity_id ?? ""),
+        walletAddress: String(m.walletAddress ?? "").toLowerCase(),
+        createdAt: String(m.createdAt ?? row.created_at),
+      };
+    })
+    .filter((w) => w.investorId && w.assetId && w.walletAddress);
+
+  const transfers: TransferRecord[] = ledger
+    .filter((row) => row.entity_type === XFER_ENTITY && row.metadata)
+    .map((row) => {
+      const m = row.metadata ?? {};
+      return {
+        id: String(m.id ?? row.id),
+        assetId: String(m.assetId ?? row.entity_id ?? ""),
+        fromWallet: String(m.fromWallet ?? "").toLowerCase(),
+        toWallet: String(m.toWallet ?? "").toLowerCase(),
+        amount: num(m.amount as number | string | null | undefined),
+        txHash: String(m.txHash ?? `supabase:${row.id}`),
+        createdAt: String(m.createdAt ?? row.created_at),
+      };
+    })
+    .filter((t) => t.assetId && t.fromWallet && t.toWallet && t.amount > 0);
+
+  return {
+    assets: mappedAssets,
+    investors: mappedInvestors,
+    mints,
+    whitelist,
+    transfers,
+  };
+}
+
+async function persistAuditLedger(
+  entityType: string,
+  entityId: string,
+  action: string,
+  metadata: Record<string, unknown>,
+): Promise<string | null> {
+  const config = getSupabaseConfig();
+  if (!config) return null;
+
+  const rows = await sbFetch<DbAuditLog[]>(`/rest/v1/audit_logs`, {
+    config,
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Prefer: "return=representation",
+    },
+    body: JSON.stringify({
+      entity_type: entityType,
+      entity_id: entityId,
+      action,
+      metadata,
+    }),
+  });
+  return rows[0]?.id ?? null;
+}
+
+export async function persistWhitelistEntry(
+  entry: WhitelistEntry,
+): Promise<void> {
+  await persistAuditLedger(WL_ENTITY, entry.assetId, "whitelist", {
+    id: entry.id,
+    investorId: entry.investorId,
+    assetId: entry.assetId,
+    walletAddress: entry.walletAddress,
+    createdAt: entry.createdAt,
+  });
+}
+
+export async function persistTransfer(entry: TransferRecord): Promise<void> {
+  await persistAuditLedger(XFER_ENTITY, entry.assetId, "transfer", {
+    id: entry.id,
+    assetId: entry.assetId,
+    fromWallet: entry.fromWallet,
+    toWallet: entry.toWallet,
+    amount: entry.amount,
+    txHash: entry.txHash,
+    createdAt: entry.createdAt,
+  });
 }
 
 export async function persistAsset(asset: TokenizedAsset): Promise<void> {

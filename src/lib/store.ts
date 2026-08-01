@@ -6,6 +6,8 @@ import {
   persistInvestor,
   persistInvestorKyc,
   persistMint,
+  persistTransfer,
+  persistWhitelistEntry,
 } from "@/lib/supabase/repository";
 import type {
   Investor,
@@ -108,19 +110,14 @@ async function hydrateFromSupabase(state: PlatformState): Promise<void> {
 
     if (remote.investors.length > 0) {
       state.investors = remote.investors;
-      state.whitelist = remote.investors
-        .filter((i) => i.kycStatus === "approved" && i.walletAddress)
-        .flatMap((i) =>
-          state.assets.map((a) => ({
-            id: createId("wl"),
-            investorId: i.id,
-            assetId: a.id,
-            walletAddress: i.walletAddress,
-            createdAt: i.createdAt,
-          })),
-        );
     } else if (state.investors[0]) {
       await persistInvestor(state.investors[0]).catch(() => undefined);
+    }
+
+    if (remote.whitelist.length > 0) {
+      state.whitelist = remote.whitelist;
+    } else if (state.whitelist[0]) {
+      await persistWhitelistEntry(state.whitelist[0]).catch(() => undefined);
     }
 
     if (remote.mints.length > 0) {
@@ -132,6 +129,10 @@ async function hydrateFromSupabase(state: PlatformState): Promise<void> {
         amount: state.mints[0].amount,
         createdAt: state.mints[0].createdAt,
       }).catch(() => undefined);
+    }
+
+    if (remote.transfers.length > 0) {
+      state.transfers = remote.transfers;
     }
   } catch {
     // Keep seed / memory state when remote is unreachable.
@@ -237,6 +238,7 @@ export async function addToWhitelist(input: {
   };
   investor.whitelisted = true;
   state.whitelist.unshift(entry);
+  await persistWhitelistEntry(entry).catch(() => undefined);
   return entry;
 }
 
@@ -331,6 +333,7 @@ export async function transferTokens(input: {
     createdAt: new Date().toISOString(),
   };
   state.transfers.unshift(record);
+  await persistTransfer(record).catch(() => undefined);
   return record;
 }
 
