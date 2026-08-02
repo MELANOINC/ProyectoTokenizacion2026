@@ -6,13 +6,21 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: "*",
-        allow: ["/", "/docs"],
-        disallow: ["/dashboard", "/dashboard/", "/api/", "/api"],
+        allow: ["/", "/docs", "/alenya", "/alenya/sop"],
+        disallow: [
+          "/dashboard",
+          "/dashboard/",
+          "/alenya/dashboard",
+          "/alenya/datos",
+          "/alenya/login",
+          "/api/",
+          "/api",
+        ],
       },
       {
         userAgent: "GPTBot",
-        allow: ["/", "/docs"],
-        disallow: ["/dashboard", "/api/"],
+        allow: ["/", "/docs", "/alenya"],
+        disallow: ["/dashboard", "/alenya/dashboard", "/api/"],
       },
     ],
     sitemap: `${SITE_URL}/sitemap.xml`,

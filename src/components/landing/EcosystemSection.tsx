@@ -2,7 +2,7 @@ const agents = [
   {
     name: "aLENYA",
     role: "Capta y califica",
-    href: "https://alenya.melanoinc.com",
+    href: "/alenya",
     body: "WhatsApp + IA: responde, scorea y agenda leads inmobiliarios.",
   },
   {
