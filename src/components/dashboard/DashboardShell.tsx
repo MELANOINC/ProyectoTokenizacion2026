@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
+import { GuideDemoBanner } from "@/components/dashboard/GuideDemoBanner";
 
 const links = [
   { href: "/dashboard/contratos", label: "Contratos" },
@@ -64,7 +65,12 @@ export function DashboardShell({
           {title}
         </h1>
         <p className="mt-2 max-w-2xl text-[var(--w2)]">{subtitle}</p>
-        <div className="mt-10">{children}</div>
+        <div className="mt-10">
+          <Suspense fallback={null}>
+            <GuideDemoBanner />
+          </Suspense>
+          {children}
+        </div>
       </main>
     </div>
   );

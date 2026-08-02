@@ -58,6 +58,9 @@ export function Hero() {
           <Link href="/dashboard" className="btn-ghost">
             Abrir plataforma
           </Link>
+          <Link href="/dashboard/contratos" className="btn-ghost">
+            Firmar y desplegar
+          </Link>
         </div>
       </div>
     </section>
