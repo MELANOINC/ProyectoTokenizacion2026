@@ -65,6 +65,6 @@ Demo data is seeded in-memory (wallet `0x1111…1111` ya whitelistada sobre `ass
 
 ## Notes
 
-- El store actual es efímero (adecuado a demo). En Render el filesystem no persiste: producción requiere DB.
+- Persistencia opcional vía Supabase (`NOTORIUS_SUPABASE_URL` + service role + `NOTORIUS_COMPANY_ID`). Sin eso, el store es in-memory (efímero en Render).
 - Los contratos no están auditados.
 - Encuadre legal CNV: ver `docs/MANUAL-LEGAL.md`.

@@ -1,4 +1,14 @@
 import { createContractAddress, createId, createTxHash } from "@/lib/ids";
+import { getSupabaseConfig } from "@/lib/supabase/config";
+import {
+  loadPlatformFromSupabase,
+  persistAsset,
+  persistInvestor,
+  persistInvestorKyc,
+  persistMint,
+  persistTransfer,
+  persistWhitelistEntry,
+} from "@/lib/supabase/repository";
 import type {
   Investor,
   MintRecord,
@@ -7,19 +17,33 @@ import type {
   TransferRecord,
   WhitelistEntry,
 } from "@/lib/types";
+import { randomUUID } from "crypto";
 
 /**
- * In-memory store for the v1 scaffold.
- * Render's filesystem is ephemeral — replace with a managed SQL DB or object storage before production.
+ * Platform store: in-memory with optional Supabase dual-write
+ * (assets / investors / tokenizations / investments).
+ * Whitelist + transfers stay in-memory until dedicated tables exist.
  */
 const globalForStore = globalThis as typeof globalThis & {
   __notoriusStore?: PlatformState;
+  __notoriusHydrate?: Promise<void>;
 };
 
+function entityId(prefix: string): string {
+  if (getSupabaseConfig()) return randomUUID();
+  return createId(prefix);
+}
+
 function seedState(): PlatformState {
-  const issuerId = "issuer_demo";
+  const useUuid = Boolean(getSupabaseConfig());
+  const issuerId = useUuid
+    ? (getSupabaseConfig()?.companyId ?? "issuer_demo")
+    : "issuer_demo";
+
   const asset: TokenizedAsset = {
-    id: "asset_puerto_madero",
+    id: useUuid
+      ? "a1111111-1111-4111-8111-111111111111"
+      : "asset_puerto_madero",
     name: "Torre Núñez — Puerto Madero",
     class: "property",
     symbol: "TNPM",
@@ -32,7 +56,9 @@ function seedState(): PlatformState {
   };
 
   const investor: Investor = {
-    id: "inv_demo_ana",
+    id: useUuid
+      ? "b2222222-2222-4222-8222-222222222222"
+      : "inv_demo_ana",
     name: "Ana Ríos",
     email: "ana@example.com",
     walletAddress: "0x1111111111111111111111111111111111111111",
@@ -42,7 +68,9 @@ function seedState(): PlatformState {
   };
 
   const whitelist: WhitelistEntry = {
-    id: "wl_demo_1",
+    id: useUuid
+      ? "c3333333-3333-4333-8333-333333333333"
+      : "wl_demo_1",
     investorId: investor.id,
     assetId: asset.id,
     walletAddress: investor.walletAddress,
@@ -50,7 +78,9 @@ function seedState(): PlatformState {
   };
 
   const mint: MintRecord = {
-    id: "mint_demo_1",
+    id: useUuid
+      ? "d4444444-4444-4444-8444-444444444444"
+      : "mint_demo_1",
     assetId: asset.id,
     toWallet: investor.walletAddress,
     amount: 125_000,
@@ -67,6 +97,48 @@ function seedState(): PlatformState {
   };
 }
 
+async function hydrateFromSupabase(state: PlatformState): Promise<void> {
+  try {
+    const remote = await loadPlatformFromSupabase();
+    if (!remote) return;
+
+    if (remote.assets.length > 0) {
+      state.assets = remote.assets;
+    } else if (state.assets[0]) {
+      await persistAsset(state.assets[0]).catch(() => undefined);
+    }
+
+    if (remote.investors.length > 0) {
+      state.investors = remote.investors;
+    } else if (state.investors[0]) {
+      await persistInvestor(state.investors[0]).catch(() => undefined);
+    }
+
+    if (remote.whitelist.length > 0) {
+      state.whitelist = remote.whitelist;
+    } else if (state.whitelist[0]) {
+      await persistWhitelistEntry(state.whitelist[0]).catch(() => undefined);
+    }
+
+    if (remote.mints.length > 0) {
+      state.mints = remote.mints;
+    } else if (state.mints[0] && state.investors[0]) {
+      await persistMint({
+        assetId: state.mints[0].assetId,
+        investorId: state.investors[0].id,
+        amount: state.mints[0].amount,
+        createdAt: state.mints[0].createdAt,
+      }).catch(() => undefined);
+    }
+
+    if (remote.transfers.length > 0) {
+      state.transfers = remote.transfers;
+    }
+  } catch {
+    // Keep seed / memory state when remote is unreachable.
+  }
+}
+
 function getState(): PlatformState {
   if (!globalForStore.__notoriusStore) {
     globalForStore.__notoriusStore = seedState();
@@ -74,8 +146,18 @@ function getState(): PlatformState {
   return globalForStore.__notoriusStore;
 }
 
-export function getSnapshot(): PlatformState {
+async function ensureReady(): Promise<PlatformState> {
   const state = getState();
+  if (!getSupabaseConfig()) return state;
+
+  if (!globalForStore.__notoriusHydrate) {
+    globalForStore.__notoriusHydrate = hydrateFromSupabase(state);
+  }
+  await globalForStore.__notoriusHydrate;
+  return state;
+}
+
+function snapshotOf(state: PlatformState): PlatformState {
   return {
     assets: [...state.assets],
     investors: [...state.investors],
@@ -85,12 +167,21 @@ export function getSnapshot(): PlatformState {
   };
 }
 
-export function registerInvestor(input: {
+export async function getSnapshot(): Promise<PlatformState> {
+  const state = await ensureReady();
+  return snapshotOf(state);
+}
+
+export function getPersistenceMode(): "supabase" | "memory" {
+  return getSupabaseConfig() ? "supabase" : "memory";
+}
+
+export async function registerInvestor(input: {
   name: string;
   email: string;
   walletAddress: string;
-}): Investor {
-  const state = getState();
+}): Promise<Investor> {
+  const state = await ensureReady();
   const existing = state.investors.find(
     (i) =>
       i.email.toLowerCase() === input.email.toLowerCase() ||
@@ -101,7 +192,7 @@ export function registerInvestor(input: {
   }
 
   const investor: Investor = {
-    id: createId("inv"),
+    id: entityId("inv"),
     name: input.name,
     email: input.email.toLowerCase(),
     walletAddress: input.walletAddress.toLowerCase(),
@@ -110,19 +201,21 @@ export function registerInvestor(input: {
     createdAt: new Date().toISOString(),
   };
   state.investors.unshift(investor);
+  await persistInvestor(investor).catch(() => undefined);
   return investor;
 }
 
-export function addToWhitelist(input: {
+export async function addToWhitelist(input: {
   investorId: string;
   assetId: string;
   walletAddress?: string;
-}): WhitelistEntry {
-  const state = getState();
+}): Promise<WhitelistEntry> {
+  const state = await ensureReady();
   const investor = state.investors.find((i) => i.id === input.investorId);
   if (!investor) throw new Error("Investor not found");
   if (investor.kycStatus !== "approved") {
     investor.kycStatus = "approved";
+    await persistInvestorKyc(investor.id, "approved").catch(() => undefined);
   }
 
   const asset = state.assets.find((a) => a.id === input.assetId);
@@ -137,7 +230,7 @@ export function addToWhitelist(input: {
   if (duplicate) return duplicate;
 
   const entry: WhitelistEntry = {
-    id: createId("wl"),
+    id: entityId("wl"),
     investorId: investor.id,
     assetId: asset.id,
     walletAddress: wallet,
@@ -145,15 +238,16 @@ export function addToWhitelist(input: {
   };
   investor.whitelisted = true;
   state.whitelist.unshift(entry);
+  await persistWhitelistEntry(entry).catch(() => undefined);
   return entry;
 }
 
-export function mintTokens(input: {
+export async function mintTokens(input: {
   assetId: string;
   toWallet: string;
   amount: number;
-}): MintRecord {
-  const state = getState();
+}): Promise<MintRecord> {
+  const state = await ensureReady();
   const asset = state.assets.find((a) => a.id === input.assetId);
   if (!asset) throw new Error("Asset not found");
 
@@ -176,7 +270,7 @@ export function mintTokens(input: {
 
   asset.mintedSupply += input.amount;
   const record: MintRecord = {
-    id: createId("mint"),
+    id: entityId("mint"),
     assetId: asset.id,
     toWallet: wallet,
     amount: input.amount,
@@ -184,16 +278,30 @@ export function mintTokens(input: {
     createdAt: new Date().toISOString(),
   };
   state.mints.unshift(record);
+
+  const investor = state.investors.find(
+    (i) => i.walletAddress.toLowerCase() === wallet,
+  );
+  if (investor) {
+    const remoteId = await persistMint({
+      assetId: asset.id,
+      investorId: investor.id,
+      amount: input.amount,
+      createdAt: record.createdAt,
+    }).catch(() => null);
+    if (remoteId) record.id = remoteId;
+  }
+
   return record;
 }
 
-export function transferTokens(input: {
+export async function transferTokens(input: {
   assetId: string;
   fromWallet: string;
   toWallet: string;
   amount: number;
-}): TransferRecord {
-  const state = getState();
+}): Promise<TransferRecord> {
+  const state = await ensureReady();
   const asset = state.assets.find((a) => a.id === input.assetId);
   if (!asset) throw new Error("Asset not found");
 
@@ -210,13 +318,13 @@ export function transferTokens(input: {
     throw new Error("Both wallets must be whitelisted for controlled transfers");
   }
 
-  const fromBalance = balanceOf(asset.id, from);
+  const fromBalance = balanceOfSync(state, asset.id, from);
   if (fromBalance < input.amount) {
     throw new Error("Insufficient token balance");
   }
 
   const record: TransferRecord = {
-    id: createId("xfer"),
+    id: entityId("xfer"),
     assetId: asset.id,
     fromWallet: from,
     toWallet: to,
@@ -225,40 +333,46 @@ export function transferTokens(input: {
     createdAt: new Date().toISOString(),
   };
   state.transfers.unshift(record);
+  await persistTransfer(record).catch(() => undefined);
   return record;
 }
 
-export function createAsset(input: {
+export async function createAsset(input: {
   name: string;
   class: TokenizedAsset["class"];
   symbol: string;
   totalSupply: number;
   issuerId: string;
   chain: TokenizedAsset["chain"];
-}): TokenizedAsset {
-  const state = getState();
+}): Promise<TokenizedAsset> {
+  const state = await ensureReady();
   if (state.assets.some((a) => a.symbol === input.symbol)) {
     throw new Error("Asset symbol already exists");
   }
 
+  const config = getSupabaseConfig();
   const asset: TokenizedAsset = {
-    id: createId("asset"),
+    id: entityId("asset"),
     name: input.name,
     class: input.class,
     symbol: input.symbol.toUpperCase(),
     totalSupply: input.totalSupply,
     mintedSupply: 0,
-    issuerId: input.issuerId,
+    issuerId: config?.companyId ?? input.issuerId,
     chain: input.chain,
     contractAddress: null,
     createdAt: new Date().toISOString(),
   };
   state.assets.unshift(asset);
+  await persistAsset(asset).catch(() => undefined);
   return asset;
 }
 
-export function balanceOf(assetId: string, wallet: string): number {
-  const state = getState();
+function balanceOfSync(
+  state: PlatformState,
+  assetId: string,
+  wallet: string,
+): number {
   const normalized = wallet.toLowerCase();
   const minted = state.mints
     .filter((m) => m.assetId === assetId && m.toWallet === normalized)
@@ -270,4 +384,12 @@ export function balanceOf(assetId: string, wallet: string): number {
     .filter((t) => t.assetId === assetId && t.fromWallet === normalized)
     .reduce((sum, t) => sum + t.amount, 0);
   return minted + received - sent;
+}
+
+export async function balanceOf(
+  assetId: string,
+  wallet: string,
+): Promise<number> {
+  const state = await ensureReady();
+  return balanceOfSync(state, assetId, wallet);
 }

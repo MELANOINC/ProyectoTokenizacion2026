@@ -33,11 +33,18 @@ function firstEnv(...names: string[]): string | undefined {
 }
 
 async function probeSupabase(): Promise<IntegrationProbe> {
-  const url = firstEnv("NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_URL");
+  const url = firstEnv(
+    "NOTORIUS_SUPABASE_URL",
+    "NEXT_PUBLIC_SUPABASE_URL",
+    "SUPABASE_URL",
+  );
   const key = firstEnv(
+    "NOTORIUS_SUPABASE_SERVICE_ROLE_KEY",
+    "NOTORIUS_SUPABASE_ANON_KEY",
     "NEXT_PUBLIC_SUPABASE_ANON_KEY",
     "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
     "SUPABASE_ANON_KEY",
+    "SUPABASE_SERVICE_ROLE_KEY",
   );
 
   if (!url || !key) {
@@ -61,30 +68,56 @@ async function probeSupabase(): Promise<IntegrationProbe> {
       };
     }
 
-    const rest = await fetch(
-      `${url.replace(/\/$/, "")}/rest/v1/tokenization_assets?select=id&limit=1`,
-      {
-        headers: {
-          apikey: key,
-          Authorization: `Bearer ${key}`,
-          Accept: "application/json",
-        },
-        signal: AbortSignal.timeout(10_000),
-      },
-    );
+    // Prefer Notorius-specific tables; fall back to Melano platform schema.
+    const restCandidates = [
+      "tokenization_assets",
+      "tokenizations",
+      "assets",
+      "investors",
+    ];
+    const base = url.replace(/\/$/, "");
+    let reached: string | undefined;
+    let lastStatus = 0;
 
-    if (!rest.ok) {
+    for (const table of restCandidates) {
+      const rest = await fetch(
+        `${base}/rest/v1/${table}?select=*&limit=1`,
+        {
+          headers: {
+            apikey: key,
+            Authorization: `Bearer ${key}`,
+            Accept: "application/json",
+          },
+          signal: AbortSignal.timeout(10_000),
+        },
+      );
+      lastStatus = rest.status;
+      if (rest.ok) {
+        reached = table;
+        break;
+      }
+      // 404 = table missing; keep trying. Other errors are fatal.
+      if (rest.status !== 404) {
+        return {
+          name: "supabase",
+          status: "RED",
+          detail: `REST ${table} HTTP ${rest.status}`,
+        };
+      }
+    }
+
+    if (!reached) {
       return {
         name: "supabase",
-        status: "RED",
-        detail: `REST probe HTTP ${rest.status}`,
+        status: "GREEN",
+        detail: `Auth healthy; no known REST tables yet (last HTTP ${lastStatus})`,
       };
     }
 
     return {
       name: "supabase",
       status: "GREEN",
-      detail: "Auth health + tokenization_assets reachable",
+      detail: `Auth health + ${reached} reachable`,
     };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";

@@ -50,7 +50,7 @@ export function SiteFooter() {
             Luxia
           </a>
           <a
-            href="https://alenya.melanoinc.com"
+            href="/alenya"
             target="_blank"
             rel="noreferrer"
             className="hover:text-[var(--gold)]"

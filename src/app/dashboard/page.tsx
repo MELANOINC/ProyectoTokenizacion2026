@@ -6,8 +6,8 @@ import { getSnapshot } from "@/lib/store";
 
 export const dynamic = "force-dynamic";
 
-export default function DashboardPage() {
-  const state = getSnapshot();
+export default async function DashboardPage() {
+  const state = await getSnapshot();
 
   return (
     <DashboardShell
