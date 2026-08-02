@@ -17,9 +17,8 @@ export const ALENYA_SUPABASE_ANON_KEY = env(
   "NEXT_PUBLIC_ALENYA_SUPABASE_ANON_KEY",
 );
 
-/** Panel gate — override in Vercel; default is demo-only. */
-export const ALENYA_PANEL_PASSWORD =
-  env("ALENYA_PANEL_PASSWORD") ?? "alenya-melano";
+/** Panel gate — required in production via Vercel env `ALENYA_PANEL_PASSWORD`. */
+export const ALENYA_PANEL_PASSWORD = env("ALENYA_PANEL_PASSWORD") ?? "";
 
 export const ALENYA_SESSION_COOKIE = "alenya_cc_session";
 export const ALENYA_SESSION_DAYS = 7;

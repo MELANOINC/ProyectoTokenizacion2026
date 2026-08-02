@@ -40,6 +40,7 @@ export function verifySessionToken(token: string | undefined | null): boolean {
 }
 
 export function verifyPanelPassword(password: string): boolean {
+  if (!ALENYA_PANEL_PASSWORD || !password) return false;
   const expected = Buffer.from(ALENYA_PANEL_PASSWORD);
   const got = Buffer.from(password);
   if (expected.length !== got.length) return false;
