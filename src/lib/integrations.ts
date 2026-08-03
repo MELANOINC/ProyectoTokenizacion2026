@@ -62,7 +62,7 @@ async function probeSupabase(): Promise<IntegrationProbe> {
     }
 
     const rest = await fetch(
-      `${url.replace(/\/$/, "")}/rest/v1/tokenization_assets?select=id&limit=1`,
+      `${url.replace(/\/$/, "")}/rest/v1/notorius_assets?select=id&limit=1`,
       {
         headers: {
           apikey: key,
@@ -84,7 +84,7 @@ async function probeSupabase(): Promise<IntegrationProbe> {
     return {
       name: "supabase",
       status: "GREEN",
-      detail: "Auth health + tokenization_assets reachable",
+      detail: "Auth health + notorius_assets reachable",
     };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";

@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { CTA } from "@/lib/cta";
+import { ECOSYSTEM } from "@/lib/ecosystem";
 
 export function SiteFooter() {
   return (
@@ -16,10 +17,10 @@ export function SiteFooter() {
           />
           <div>
             <p className="font-[family-name:var(--font-display)] text-2xl font-bold tracking-tight text-[var(--w)]">
-              NOTORIUS
+              MELANO INC
             </p>
             <p className="mt-1 max-w-md text-[var(--w2)]">
-              Melano Inc · Smart Contract Engine + Tokenization Platform
+              aLENYA capta · LUXIA convierte · NOTORIUS tokeniza
             </p>
           </div>
         </div>
@@ -32,31 +33,28 @@ export function SiteFooter() {
           >
             Agendar diagnóstico
           </a>
+          <a
+            href={ECOSYSTEM.alenya.url}
+            target="_blank"
+            rel="noreferrer"
+            className="hover:text-[var(--gold)]"
+          >
+            aLENYA
+          </a>
+          <a
+            href={ECOSYSTEM.luxia.url}
+            target="_blank"
+            rel="noreferrer"
+            className="hover:text-[var(--gold)]"
+          >
+            LUXIA
+          </a>
           <Link href="/dashboard/contratos" className="hover:text-[var(--gold)]">
-            Estudio
-          </Link>
-          <Link href="/dashboard" className="hover:text-[var(--gold)]">
-            Dashboard
+            NOTORIUS
           </Link>
           <Link href="/docs" className="hover:text-[var(--gold)]">
             Docs
           </Link>
-          <a
-            href="https://luxia.melanoinc.com"
-            target="_blank"
-            rel="noreferrer"
-            className="hover:text-[var(--gold)]"
-          >
-            Luxia
-          </a>
-          <a
-            href="https://alenya.melanoinc.com"
-            target="_blank"
-            rel="noreferrer"
-            className="hover:text-[var(--gold)]"
-          >
-            Alenya
-          </a>
         </div>
       </div>
     </footer>

@@ -21,13 +21,13 @@ const mono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "NOTORIUS — Agente tokenizador de propiedades y activos | Melano Inc",
+  title: "Melano Inc — aLENYA · LUXIA · NOTORIUS",
   description:
-    "Tokenizá propiedades y activos reales con smart contracts, KYC, whitelist y emisión controlada. Hub Melano: Alenya capta, Luxia convierte, NOTORIUS tokeniza.",
+    "Stack inmobiliario end-to-end: aLENYA capta, LUXIA convierte y NOTORIUS tokeniza propiedades y activos reales.",
   openGraph: {
-    title: "NOTORIUS — Agente tokenizador | Melano Inc",
+    title: "Melano Inc — Capta. Convierte. Tokeniza.",
     description:
-      "Smart Contract Engine + Tokenization Platform para inmobiliarias y emisores.",
+      "aLENYA, LUXIA y NOTORIUS: del lead en WhatsApp al security token en Polygon.",
     type: "website",
   },
 };

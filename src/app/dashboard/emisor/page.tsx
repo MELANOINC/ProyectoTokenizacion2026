@@ -5,8 +5,8 @@ import { getSnapshot } from "@/lib/store";
 
 export const dynamic = "force-dynamic";
 
-export default function EmisorPage() {
-  const { assets, mints } = getSnapshot();
+export default async function EmisorPage() {
+  const { assets, mints } = await getSnapshot();
 
   return (
     <DashboardShell

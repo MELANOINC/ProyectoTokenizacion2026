@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { CTA } from "@/lib/cta";
+import { ECOSYSTEM } from "@/lib/ecosystem";
 
 export function SiteHeader() {
   return (
@@ -17,23 +18,33 @@ export function SiteHeader() {
           />
           <span className="leading-tight">
             <strong className="block font-[family-name:var(--font-display)] text-sm tracking-[0.18em] text-[var(--w)]">
-              NOTORIUS
+              MELANO INC
             </strong>
             <small className="block text-[11px] text-[var(--g1)]">
-              Melano Inc · Tokenización
+              aLENYA · LUXIA · NOTORIUS
             </small>
           </span>
         </Link>
 
         <nav className="flex items-center gap-2 text-sm text-[var(--w2)] md:gap-4">
-          <Link href="#guia" className="hidden hover:text-[var(--w)] sm:inline">
-            Guía
-          </Link>
-          <Link href="#plataforma" className="hidden hover:text-[var(--w)] sm:inline">
-            Plataforma
-          </Link>
-          <Link href="#ecosistema" className="hidden hover:text-[var(--w)] md:inline">
-            Ecosistema
+          <a
+            href={ECOSYSTEM.alenya.url}
+            target="_blank"
+            rel="noreferrer"
+            className="hidden hover:text-[var(--w)] sm:inline"
+          >
+            aLENYA
+          </a>
+          <a
+            href={ECOSYSTEM.luxia.url}
+            target="_blank"
+            rel="noreferrer"
+            className="hidden hover:text-[var(--w)] sm:inline"
+          >
+            LUXIA
+          </a>
+          <Link href="#notorius" className="hidden hover:text-[var(--w)] md:inline">
+            NOTORIUS
           </Link>
           <Link href="/dashboard" className="hidden hover:text-[var(--w)] md:inline">
             Dashboard
@@ -44,7 +55,7 @@ export function SiteHeader() {
             rel="noopener noreferrer"
             className="border border-[var(--gold-lo)] bg-[var(--gold)] px-4 py-2 font-semibold text-[#14110a] transition hover:bg-[var(--gold-hi)]"
           >
-            Agendar diagnóstico
+            Agendar
           </a>
         </nav>
       </div>

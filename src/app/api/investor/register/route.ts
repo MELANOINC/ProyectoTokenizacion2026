@@ -3,7 +3,7 @@ import { getSnapshot, registerInvestor } from "@/lib/store";
 import { registerInvestorSchema } from "@/lib/validation";
 
 export async function GET() {
-  const { investors } = getSnapshot();
+  const { investors } = await getSnapshot();
   return jsonOk({ investors });
 }
 
@@ -11,7 +11,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const input = registerInvestorSchema.parse(body);
-    const investor = registerInvestor(input);
+    const investor = await registerInvestor(input);
     return jsonOk({ investor }, 201);
   } catch (error) {
     return jsonError(error);

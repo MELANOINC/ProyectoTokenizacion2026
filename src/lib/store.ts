@@ -1,4 +1,13 @@
 import { createContractAddress, createId, createTxHash } from "@/lib/ids";
+import {
+  insertMint,
+  insertTransfer,
+  loadPlatformState,
+  upsertAsset,
+  upsertInvestor,
+  upsertWhitelist,
+} from "@/lib/store-db";
+import { getSupabase } from "@/lib/supabase";
 import type {
   Investor,
   MintRecord,
@@ -9,11 +18,13 @@ import type {
 } from "@/lib/types";
 
 /**
- * In-memory store for the v1 scaffold.
- * Render's filesystem is ephemeral — replace with a managed SQL DB or object storage before production.
+ * In-memory cache hydrated from Supabase when configured.
+ * Without Supabase env, operates as the original ephemeral demo store.
  */
 const globalForStore = globalThis as typeof globalThis & {
   __notoriusStore?: PlatformState;
+  __notoriusHydrated?: boolean;
+  __notoriusHydratePromise?: Promise<void>;
 };
 
 function seedState(): PlatformState {
@@ -67,6 +78,35 @@ function seedState(): PlatformState {
   };
 }
 
+async function hydrate(): Promise<void> {
+  if (globalForStore.__notoriusHydrated) return;
+  if (globalForStore.__notoriusHydratePromise) {
+    await globalForStore.__notoriusHydratePromise;
+    return;
+  }
+
+  globalForStore.__notoriusHydratePromise = (async () => {
+    const client = getSupabase();
+    if (client) {
+      const remote = await loadPlatformState(client);
+      if (remote) {
+        globalForStore.__notoriusStore = remote;
+      } else if (!globalForStore.__notoriusStore) {
+        globalForStore.__notoriusStore = seedState();
+      }
+    } else if (!globalForStore.__notoriusStore) {
+      globalForStore.__notoriusStore = seedState();
+    }
+    globalForStore.__notoriusHydrated = true;
+  })();
+
+  try {
+    await globalForStore.__notoriusHydratePromise;
+  } finally {
+    globalForStore.__notoriusHydratePromise = undefined;
+  }
+}
+
 function getState(): PlatformState {
   if (!globalForStore.__notoriusStore) {
     globalForStore.__notoriusStore = seedState();
@@ -74,7 +114,8 @@ function getState(): PlatformState {
   return globalForStore.__notoriusStore;
 }
 
-export function getSnapshot(): PlatformState {
+export async function getSnapshot(): Promise<PlatformState> {
+  await hydrate();
   const state = getState();
   return {
     assets: [...state.assets],
@@ -85,11 +126,12 @@ export function getSnapshot(): PlatformState {
   };
 }
 
-export function registerInvestor(input: {
+export async function registerInvestor(input: {
   name: string;
   email: string;
   walletAddress: string;
-}): Investor {
+}): Promise<Investor> {
+  await hydrate();
   const state = getState();
   const existing = state.investors.find(
     (i) =>
@@ -110,14 +152,19 @@ export function registerInvestor(input: {
     createdAt: new Date().toISOString(),
   };
   state.investors.unshift(investor);
+
+  const client = getSupabase();
+  if (client) await upsertInvestor(client, investor);
+
   return investor;
 }
 
-export function addToWhitelist(input: {
+export async function addToWhitelist(input: {
   investorId: string;
   assetId: string;
   walletAddress?: string;
-}): WhitelistEntry {
+}): Promise<WhitelistEntry> {
+  await hydrate();
   const state = getState();
   const investor = state.investors.find((i) => i.id === input.investorId);
   if (!investor) throw new Error("Investor not found");
@@ -145,14 +192,22 @@ export function addToWhitelist(input: {
   };
   investor.whitelisted = true;
   state.whitelist.unshift(entry);
+
+  const client = getSupabase();
+  if (client) {
+    await upsertInvestor(client, investor);
+    await upsertWhitelist(client, entry);
+  }
+
   return entry;
 }
 
-export function mintTokens(input: {
+export async function mintTokens(input: {
   assetId: string;
   toWallet: string;
   amount: number;
-}): MintRecord {
+}): Promise<MintRecord> {
+  await hydrate();
   const state = getState();
   const asset = state.assets.find((a) => a.id === input.assetId);
   if (!asset) throw new Error("Asset not found");
@@ -184,15 +239,23 @@ export function mintTokens(input: {
     createdAt: new Date().toISOString(),
   };
   state.mints.unshift(record);
+
+  const client = getSupabase();
+  if (client) {
+    await upsertAsset(client, asset);
+    await insertMint(client, record);
+  }
+
   return record;
 }
 
-export function transferTokens(input: {
+export async function transferTokens(input: {
   assetId: string;
   fromWallet: string;
   toWallet: string;
   amount: number;
-}): TransferRecord {
+}): Promise<TransferRecord> {
+  await hydrate();
   const state = getState();
   const asset = state.assets.find((a) => a.id === input.assetId);
   if (!asset) throw new Error("Asset not found");
@@ -210,7 +273,7 @@ export function transferTokens(input: {
     throw new Error("Both wallets must be whitelisted for controlled transfers");
   }
 
-  const fromBalance = balanceOf(asset.id, from);
+  const fromBalance = await balanceOf(asset.id, from);
   if (fromBalance < input.amount) {
     throw new Error("Insufficient token balance");
   }
@@ -225,17 +288,22 @@ export function transferTokens(input: {
     createdAt: new Date().toISOString(),
   };
   state.transfers.unshift(record);
+
+  const client = getSupabase();
+  if (client) await insertTransfer(client, record);
+
   return record;
 }
 
-export function createAsset(input: {
+export async function createAsset(input: {
   name: string;
   class: TokenizedAsset["class"];
   symbol: string;
   totalSupply: number;
   issuerId: string;
   chain: TokenizedAsset["chain"];
-}): TokenizedAsset {
+}): Promise<TokenizedAsset> {
+  await hydrate();
   const state = getState();
   if (state.assets.some((a) => a.symbol === input.symbol)) {
     throw new Error("Asset symbol already exists");
@@ -254,10 +322,18 @@ export function createAsset(input: {
     createdAt: new Date().toISOString(),
   };
   state.assets.unshift(asset);
+
+  const client = getSupabase();
+  if (client) await upsertAsset(client, asset);
+
   return asset;
 }
 
-export function balanceOf(assetId: string, wallet: string): number {
+export async function balanceOf(
+  assetId: string,
+  wallet: string,
+): Promise<number> {
+  await hydrate();
   const state = getState();
   const normalized = wallet.toLowerCase();
   const minted = state.mints
@@ -270,4 +346,28 @@ export function balanceOf(assetId: string, wallet: string): number {
     .filter((t) => t.assetId === assetId && t.fromWallet === normalized)
     .reduce((sum, t) => sum + t.amount, 0);
   return minted + received - sent;
+}
+
+/** Find investor by email or wallet (case-insensitive). */
+export async function findInvestor(input: {
+  email?: string;
+  walletAddress?: string;
+}): Promise<Investor | undefined> {
+  await hydrate();
+  const state = getState();
+  return state.investors.find((i) => {
+    if (
+      input.email &&
+      i.email.toLowerCase() === input.email.toLowerCase()
+    ) {
+      return true;
+    }
+    if (
+      input.walletAddress &&
+      i.walletAddress.toLowerCase() === input.walletAddress.toLowerCase()
+    ) {
+      return true;
+    }
+    return false;
+  });
 }

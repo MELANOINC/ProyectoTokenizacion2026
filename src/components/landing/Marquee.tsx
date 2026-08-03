@@ -1,14 +1,14 @@
 const items = [
+  "aLENYA",
+  "Captura WhatsApp",
+  "LUXIA",
+  "CRM + pipeline",
+  "NOTORIUS",
+  "Security tokens",
   "Polygon",
-  "MetaMask",
-  "ERC-3643",
-  "Security Tokens",
   "KYC on-chain",
   "Whitelist",
-  "Mint",
-  "Controlled transfers",
-  "Luxia CRM",
-  "aLENYA",
+  "Mint controlado",
 ];
 
 export function Marquee() {

@@ -5,8 +5,8 @@ import { getSnapshot } from "@/lib/store";
 
 export const dynamic = "force-dynamic";
 
-export default function AdminPage() {
-  const state = getSnapshot();
+export default async function AdminPage() {
+  const state = await getSnapshot();
   const approved = state.investors.filter((i) => i.kycStatus === "approved").length;
 
   return (

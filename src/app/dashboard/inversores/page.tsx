@@ -5,8 +5,8 @@ import { getSnapshot } from "@/lib/store";
 
 export const dynamic = "force-dynamic";
 
-export default function InversoresPage() {
-  const { investors, whitelist } = getSnapshot();
+export default async function InversoresPage() {
+  const { investors, whitelist } = await getSnapshot();
 
   return (
     <DashboardShell
