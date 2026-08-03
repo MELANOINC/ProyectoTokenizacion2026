@@ -6,10 +6,13 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: "*",
-        allow: ["/", "/docs", "/alenya", "/alenya/sop"],
+        allow: ["/", "/docs", "/alenya", "/alenya/sop", "/precios", "/comprar"],
         disallow: [
           "/dashboard",
           "/dashboard/",
+          "/admin",
+          "/admin/",
+          "/gracias",
           "/alenya/dashboard",
           "/alenya/datos",
           "/alenya/login",
@@ -19,8 +22,8 @@ export default function robots(): MetadataRoute.Robots {
       },
       {
         userAgent: "GPTBot",
-        allow: ["/", "/docs", "/alenya"],
-        disallow: ["/dashboard", "/alenya/dashboard", "/api/"],
+        allow: ["/", "/docs", "/alenya", "/precios"],
+        disallow: ["/dashboard", "/admin", "/alenya/dashboard", "/api/"],
       },
     ],
     sitemap: `${SITE_URL}/sitemap.xml`,

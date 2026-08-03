@@ -126,10 +126,10 @@ export function GuideSection() {
                 {isDone ? "Ya marcado · siguiente" : "Marcar en demo"}
               </button>
               <Link
-                href={`${active.demoPath}?from=guide&lesson=${active.id}`}
+                href={`/precios`}
                 className="rounded-full border border-[var(--line)] px-5 py-2.5 text-sm font-medium text-[var(--w2)] transition hover:border-[var(--neon)] hover:text-[var(--w)]"
               >
-                Abrir en panel
+                Ver planes
               </Link>
               {flash ? (
                 <span className="font-mono text-xs tracking-wider text-[var(--mint)]">
@@ -142,10 +142,10 @@ export function GuideSection() {
               <p className="mt-4 text-sm text-[var(--mint)]">
                 Guía completa.{" "}
                 <Link
-                  href="/dashboard?from=guide&complete=1"
+                  href="/comprar?plan=notorius-piloto"
                   className="underline underline-offset-4"
                 >
-                  Entrar al dashboard demo
+                  Contratar piloto NOTORIUS
                 </Link>
               </p>
             ) : null}

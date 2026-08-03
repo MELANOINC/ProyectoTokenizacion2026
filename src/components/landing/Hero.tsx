@@ -43,8 +43,8 @@ export function Hero() {
         </p>
 
         <div className="animate-rise-late mt-8 flex flex-wrap items-center gap-3">
-          <Link href="/dashboard/contratos" className="btn-primary">
-            Firmar y desplegar
+          <Link href="/precios" className="btn-primary">
+            Ver planes y comprar
           </Link>
           <a
             href={CTA.calendly}
@@ -55,12 +55,6 @@ export function Hero() {
             Agendar diagnóstico
             <span className="cta-line absolute bottom-2 left-4 right-4 h-px bg-[var(--gold)]/70" />
           </a>
-          <Link href="/dashboard" className="btn-ghost">
-            Abrir plataforma
-          </Link>
-          <Link href="/dashboard/contratos" className="btn-ghost">
-            Firmar y desplegar
-          </Link>
         </div>
       </div>
     </section>

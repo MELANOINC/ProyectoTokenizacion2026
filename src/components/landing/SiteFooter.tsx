@@ -24,6 +24,12 @@ export function SiteFooter() {
           </div>
         </div>
         <div className="flex flex-wrap gap-5 text-sm text-[var(--g1)]">
+          <Link href="/precios" className="hover:text-[var(--gold)]">
+            Precios
+          </Link>
+          <Link href="/comprar" className="hover:text-[var(--gold)]">
+            Comprar
+          </Link>
           <a
             href={CTA.calendly}
             target="_blank"
@@ -32,14 +38,11 @@ export function SiteFooter() {
           >
             Agendar diagnóstico
           </a>
-          <Link href="/dashboard/contratos" className="hover:text-[var(--gold)]">
-            Estudio
-          </Link>
-          <Link href="/dashboard" className="hover:text-[var(--gold)]">
-            Dashboard
-          </Link>
           <Link href="/docs" className="hover:text-[var(--gold)]">
             Docs
+          </Link>
+          <Link href="/admin/login" className="hover:text-[var(--gold)]">
+            Acceso interno
           </Link>
           <a
             href="https://luxia.melanoinc.com"

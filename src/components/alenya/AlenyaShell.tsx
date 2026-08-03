@@ -29,16 +29,22 @@ export function AlenyaShell({
           {nav === "marketing" ? (
             <nav className="flex items-center gap-3 text-sm">
               <Link
-                href="/alenya#flujo"
+                href="/precios"
                 className="hidden text-[var(--w2)] hover:text-[var(--w)] sm:inline"
               >
-                Flujo
+                Precios
               </Link>
               <Link
                 href="/alenya/login?returnTo=/alenya/dashboard"
+                className="hidden text-[var(--w2)] hover:text-[var(--w)] sm:inline"
+              >
+                Ya soy cliente
+              </Link>
+              <Link
+                href="/comprar?plan=alenya-pro"
                 className="border border-[var(--gold-lo)] bg-[var(--gold)] px-4 py-2 font-semibold text-[#14110a] transition hover:bg-[var(--gold-hi)]"
               >
-                Abrir Command Center
+                Contratar
               </Link>
             </nav>
           ) : (
