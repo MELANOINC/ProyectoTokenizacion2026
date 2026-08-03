@@ -1,11 +1,14 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type {
   Investor,
+  KycReview,
+  LedgerStatus,
   MintRecord,
   PlatformState,
   TokenizedAsset,
   TransferRecord,
   WhitelistEntry,
+  WhitelistStatus,
 } from "@/lib/types";
 
 type AssetRow = {
@@ -18,6 +21,10 @@ type AssetRow = {
   issuer_id: string;
   chain: TokenizedAsset["chain"];
   contract_address: string | null;
+  identity_registry_address?: string | null;
+  deploy_tx_hash?: string | null;
+  chain_id?: number | null;
+  status?: TokenizedAsset["status"];
   created_at: string;
 };
 
@@ -28,6 +35,9 @@ type InvestorRow = {
   wallet_address: string;
   kyc_status: Investor["kycStatus"];
   whitelisted: boolean;
+  country_code?: string | null;
+  kyc_reviewed_at?: string | null;
+  kyc_reviewed_by?: string | null;
   created_at: string;
 };
 
@@ -36,6 +46,8 @@ type WhitelistRow = {
   investor_id: string;
   asset_id: string;
   wallet_address: string;
+  onchain_tx_hash?: string | null;
+  status?: WhitelistStatus;
   created_at: string;
 };
 
@@ -45,6 +57,8 @@ type MintRow = {
   to_wallet: string;
   amount: number | string;
   tx_hash: string;
+  block_number?: number | string | null;
+  status?: LedgerStatus;
   created_at: string;
 };
 
@@ -55,6 +69,8 @@ type TransferRow = {
   to_wallet: string;
   amount: number | string;
   tx_hash: string;
+  block_number?: number | string | null;
+  status?: LedgerStatus;
   created_at: string;
 };
 
@@ -103,6 +119,10 @@ export async function loadPlatformState(
       issuerId: row.issuer_id,
       chain: row.chain,
       contractAddress: row.contract_address,
+      identityRegistryAddress: row.identity_registry_address ?? null,
+      deployTxHash: row.deploy_tx_hash ?? null,
+      chainId: row.chain_id ?? null,
+      status: row.status ?? "draft",
       createdAt: row.created_at,
     }),
   );
@@ -117,6 +137,9 @@ export async function loadPlatformState(
       walletAddress: row.wallet_address,
       kycStatus: row.kyc_status,
       whitelisted: row.whitelisted,
+      countryCode: row.country_code ?? null,
+      kycReviewedAt: row.kyc_reviewed_at ?? null,
+      kycReviewedBy: row.kyc_reviewed_by ?? null,
       createdAt: row.created_at,
     }),
   );
@@ -127,6 +150,8 @@ export async function loadPlatformState(
       investorId: row.investor_id,
       assetId: row.asset_id,
       walletAddress: row.wallet_address,
+      onchainTxHash: row.onchain_tx_hash ?? null,
+      status: row.status ?? "requested",
       createdAt: row.created_at,
     }),
   );
@@ -138,6 +163,11 @@ export async function loadPlatformState(
       toWallet: row.to_wallet,
       amount: num(row.amount),
       txHash: row.tx_hash,
+      blockNumber:
+        row.block_number === null || row.block_number === undefined
+          ? null
+          : num(row.block_number),
+      status: row.status ?? "confirmed",
       createdAt: row.created_at,
     }),
   );
@@ -150,6 +180,11 @@ export async function loadPlatformState(
       toWallet: row.to_wallet,
       amount: num(row.amount),
       txHash: row.tx_hash,
+      blockNumber:
+        row.block_number === null || row.block_number === undefined
+          ? null
+          : num(row.block_number),
+      status: row.status ?? "confirmed",
       createdAt: row.created_at,
     }),
   );
@@ -171,7 +206,12 @@ export async function upsertAsset(
     issuer_id: asset.issuerId,
     chain: asset.chain,
     contract_address: asset.contractAddress,
+    identity_registry_address: asset.identityRegistryAddress ?? null,
+    deploy_tx_hash: asset.deployTxHash ?? null,
+    chain_id: asset.chainId ?? null,
+    status: asset.status ?? "draft",
     created_at: asset.createdAt,
+    updated_at: new Date().toISOString(),
   });
   if (error) throw new Error(`DB asset upsert: ${error.message}`);
 }
@@ -187,7 +227,11 @@ export async function upsertInvestor(
     wallet_address: investor.walletAddress,
     kyc_status: investor.kycStatus,
     whitelisted: investor.whitelisted,
+    country_code: investor.countryCode ?? null,
+    kyc_reviewed_at: investor.kycReviewedAt ?? null,
+    kyc_reviewed_by: investor.kycReviewedBy ?? null,
     created_at: investor.createdAt,
+    updated_at: new Date().toISOString(),
   });
   if (error) throw new Error(`DB investor upsert: ${error.message}`);
 }
@@ -201,7 +245,10 @@ export async function upsertWhitelist(
     investor_id: entry.investorId,
     asset_id: entry.assetId,
     wallet_address: entry.walletAddress,
+    onchain_tx_hash: entry.onchainTxHash ?? null,
+    status: entry.status ?? "requested",
     created_at: entry.createdAt,
+    updated_at: new Date().toISOString(),
   });
   if (error) throw new Error(`DB whitelist upsert: ${error.message}`);
 }
@@ -216,6 +263,8 @@ export async function insertMint(
     to_wallet: mint.toWallet,
     amount: mint.amount,
     tx_hash: mint.txHash,
+    block_number: mint.blockNumber ?? null,
+    status: mint.status ?? "confirmed",
     created_at: mint.createdAt,
   });
   if (error) throw new Error(`DB mint insert: ${error.message}`);
@@ -232,9 +281,51 @@ export async function insertTransfer(
     to_wallet: transfer.toWallet,
     amount: transfer.amount,
     tx_hash: transfer.txHash,
+    block_number: transfer.blockNumber ?? null,
+    status: transfer.status ?? "confirmed",
     created_at: transfer.createdAt,
   });
   if (error) throw new Error(`DB transfer insert: ${error.message}`);
+}
+
+export async function insertKycReview(
+  client: SupabaseClient,
+  review: KycReview,
+): Promise<void> {
+  const { error } = await client.from("notorius_kyc_reviews").insert({
+    id: review.id,
+    investor_id: review.investorId,
+    decision: review.decision,
+    reviewer_id: review.reviewerId ?? null,
+    notes: review.notes ?? null,
+    created_at: review.createdAt,
+  });
+  if (error) throw new Error(`DB kyc review insert: ${error.message}`);
+}
+
+export async function insertChainEvent(
+  client: SupabaseClient,
+  event: {
+    assetId?: string | null;
+    eventName: string;
+    txHash: string;
+    blockNumber?: number | null;
+    logIndex?: number | null;
+    payload?: Record<string, unknown>;
+  },
+): Promise<void> {
+  const { error } = await client.from("notorius_chain_events").upsert(
+    {
+      asset_id: event.assetId ?? null,
+      event_name: event.eventName,
+      tx_hash: event.txHash,
+      block_number: event.blockNumber ?? null,
+      log_index: event.logIndex ?? null,
+      payload: event.payload ?? {},
+    },
+    { onConflict: "tx_hash,log_index" },
+  );
+  if (error) throw new Error(`DB chain event insert: ${error.message}`);
 }
 
 export type HandoffRecord = {

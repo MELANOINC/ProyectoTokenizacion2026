@@ -1,24 +1,29 @@
 # NOTORIUS™ Contracts
 
-Security-token scaffolds aligned with ERC-3643 patterns:
+Security-token scaffolds aligned with ERC-3643 patterns, with role separation:
 
 | Contract | Role |
 |---|---|
-| `IdentityRegistry.sol` | KYC / identity verification mapping |
-| `SecurityToken.sol` | Whitelist-gated mint + controlled transfers |
+| `IdentityRegistry.sol` | KYC / identity verification (`ADMIN_ROLE`, `COMPLIANCE_ROLE`) |
+| `SecurityToken.sol` | Whitelist-gated mint + controlled transfers (`ADMIN_ROLE`, `COMPLIANCE_ROLE`, `ISSUER_ROLE`) |
 
 ## Target chains
 
-- Polygon
-- Base
+- Polygon (Amoy / Mainnet)
+- Base (schema-ready; wagmi transport pending)
 
 ## Status
 
-Scaffold for R&D. Not audited. Estimated production audit range: USD 15–50k.
+Hardened scaffold for capital-real foundation. **Not audited.** Do not deploy mainnet capital without an external audit (est. USD 15–50k).
 
-## Next hardening steps
+## Roles
 
-1. Adopt full ERC-3643 modular stack (or ONCHAINID-compatible identity).
-2. Add compliance modules (country restrictions, holding periods).
-3. Add role separation (agent, compliance officer, issuer).
-4. Formal verification + external audit before mainnet capital.
+- Deployer receives admin + compliance (+ issuer on SecurityToken).
+- `registerIdentity` / `setWhitelisted` → compliance
+- `mint` → issuer
+
+## Next (Fase 2)
+
+1. Full ERC-3643 / ONCHAINID modular stack
+2. Compliance modules (country, holding periods)
+3. Formal verification + external audit before mainnet capital

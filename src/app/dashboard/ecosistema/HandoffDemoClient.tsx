@@ -1,15 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 
 type Source = "alenya" | "luxia" | "brunomelano" | "manual";
 
 export function HandoffDemoClient() {
+  const reactId = useId().replace(/:/g, "");
   const [source, setSource] = useState<Source>("luxia");
   const [name, setName] = useState("Lead Demo Melano");
-  const [email, setEmail] = useState(
-    `lead-${Date.now().toString().slice(-6)}@melano.demo`,
-  );
+  const [email, setEmail] = useState(`lead-${reactId}@melano.demo`);
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<string | null>(null);
 
@@ -39,71 +38,60 @@ export function HandoffDemoClient() {
           handoff: { status: string };
         };
       };
-      if (!json.ok || !json.data) {
-        setResult(json.error ?? "Error en handoff");
-      } else {
-        setResult(
-          `OK · ${json.data.handoff.status} · inversor ${json.data.investor.id}${
-            json.data.whitelisted ? " · whitelist" : ""
-          }`,
-        );
-        setEmail(`lead-${Date.now().toString().slice(-6)}@melano.demo`);
+      if (!res.ok || !json.ok || !json.data) {
+        throw new Error(json.error ?? `HTTP ${res.status}`);
       }
+      setResult(
+        `OK · ${json.data.investor.email} · status=${json.data.handoff.status} · whitelist=${json.data.whitelisted}`,
+      );
     } catch (error) {
-      setResult(error instanceof Error ? error.message : "Network error");
+      setResult(error instanceof Error ? error.message : "Error");
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <form onSubmit={submit} className="mt-6 grid gap-3 md:grid-cols-4">
+    <form onSubmit={submit} className="panel space-y-4 p-6">
+      <p className="font-mono text-xs tracking-[0.18em] text-[var(--gold)] uppercase">
+        Handoff demo
+      </p>
       <label className="block text-sm text-[var(--w2)]">
-        Fuente
+        Source
         <select
+          className="field mt-1"
           value={source}
           onChange={(e) => setSource(e.target.value as Source)}
-          className="mt-1 w-full border border-[var(--line)] bg-[var(--s1)] px-3 py-2 text-[var(--w)]"
         >
-          <option value="alenya">aLENYA</option>
-          <option value="luxia">LUXIA</option>
-          <option value="brunomelano">Bruno Melano</option>
-          <option value="manual">Manual</option>
+          <option value="luxia">luxia</option>
+          <option value="alenya">alenya</option>
+          <option value="brunomelano">brunomelano</option>
+          <option value="manual">manual</option>
         </select>
       </label>
-      <label className="block text-sm text-[var(--w2)] md:col-span-1">
+      <label className="block text-sm text-[var(--w2)]">
         Nombre
         <input
+          className="field mt-1"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="mt-1 w-full border border-[var(--line)] bg-[var(--s1)] px-3 py-2 text-[var(--w)]"
           required
         />
       </label>
-      <label className="block text-sm text-[var(--w2)] md:col-span-1">
+      <label className="block text-sm text-[var(--w2)]">
         Email
         <input
+          className="field mt-1"
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="mt-1 w-full border border-[var(--line)] bg-[var(--s1)] px-3 py-2 text-[var(--w)]"
           required
         />
       </label>
-      <div className="flex items-end">
-        <button
-          type="submit"
-          disabled={busy}
-          className="btn-primary w-full disabled:opacity-60"
-        >
-          {busy ? "Enviando…" : "Handoff → NOTORIUS"}
-        </button>
-      </div>
-      {result ? (
-        <p className="md:col-span-4 font-mono text-sm text-[var(--gold)]">
-          {result}
-        </p>
-      ) : null}
+      <button type="submit" className="btn-primary" disabled={busy}>
+        {busy ? "Enviando…" : "POST /api/ecosystem/handoff"}
+      </button>
+      {result ? <p className="text-sm text-[var(--w2)]">{result}</p> : null}
     </form>
   );
 }

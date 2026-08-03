@@ -1,4 +1,5 @@
 import { createContractAddress, createId, createTxHash } from "@/lib/ids";
+import { assertTxHash, isDemoLedgerMode } from "@/lib/ledger-mode";
 import {
   insertMint,
   insertTransfer,
@@ -6,15 +7,19 @@ import {
   upsertAsset,
   upsertInvestor,
   upsertWhitelist,
+  insertKycReview,
 } from "@/lib/store-db";
 import { getSupabase } from "@/lib/supabase";
 import type {
   Investor,
+  KycStatus,
+  LedgerStatus,
   MintRecord,
   PlatformState,
   TokenizedAsset,
   TransferRecord,
   WhitelistEntry,
+  WhitelistStatus,
 } from "@/lib/types";
 
 /**
@@ -39,6 +44,7 @@ function seedState(): PlatformState {
     issuerId,
     chain: "polygon",
     contractAddress: "0x3643a11c0de0f0a0b0c0d0e0f0a1b2c3d4e5f678",
+    status: "draft",
     createdAt: new Date("2026-06-01T12:00:00.000Z").toISOString(),
   };
 
@@ -57,6 +63,7 @@ function seedState(): PlatformState {
     investorId: investor.id,
     assetId: asset.id,
     walletAddress: investor.walletAddress,
+    status: "onchain",
     createdAt: new Date("2026-06-03T12:00:00.000Z").toISOString(),
   };
 
@@ -66,6 +73,7 @@ function seedState(): PlatformState {
     toWallet: investor.walletAddress,
     amount: 125_000,
     txHash: "0xabc123def456abc123def456abc123def456abc123def456abc123def456abcd",
+    status: "confirmed",
     createdAt: new Date("2026-06-04T12:00:00.000Z").toISOString(),
   };
 
@@ -114,6 +122,18 @@ function getState(): PlatformState {
   return globalForStore.__notoriusStore;
 }
 
+function resolveTxHash(input?: string): { txHash: string; status: LedgerStatus } {
+  if (input) {
+    return { txHash: assertTxHash(input), status: "confirmed" };
+  }
+  if (isDemoLedgerMode()) {
+    return { txHash: createTxHash(), status: "confirmed" };
+  }
+  throw new Error(
+    "txHash is required — confirm the on-chain transaction before recording the ledger entry",
+  );
+}
+
 export async function getSnapshot(): Promise<PlatformState> {
   await hydrate();
   const state = getState();
@@ -159,17 +179,52 @@ export async function registerInvestor(input: {
   return investor;
 }
 
+export async function reviewKyc(input: {
+  investorId: string;
+  decision: Extract<KycStatus, "approved" | "rejected">;
+  reviewerId?: string | null;
+  notes?: string | null;
+}): Promise<Investor> {
+  await hydrate();
+  const state = getState();
+  const investor = state.investors.find((i) => i.id === input.investorId);
+  if (!investor) throw new Error("Investor not found");
+
+  investor.kycStatus = input.decision;
+  investor.kycReviewedAt = new Date().toISOString();
+  investor.kycReviewedBy = input.reviewerId ?? null;
+  if (input.decision === "rejected") {
+    investor.whitelisted = false;
+  }
+
+  const client = getSupabase();
+  if (client) {
+    await upsertInvestor(client, investor);
+    await insertKycReview(client, {
+      id: createId("kyc"),
+      investorId: investor.id,
+      decision: input.decision,
+      reviewerId: input.reviewerId ?? null,
+      notes: input.notes ?? null,
+      createdAt: investor.kycReviewedAt,
+    });
+  }
+
+  return investor;
+}
+
 export async function addToWhitelist(input: {
   investorId: string;
   assetId: string;
   walletAddress?: string;
+  onchainTxHash?: string;
 }): Promise<WhitelistEntry> {
   await hydrate();
   const state = getState();
   const investor = state.investors.find((i) => i.id === input.investorId);
   if (!investor) throw new Error("Investor not found");
   if (investor.kycStatus !== "approved") {
-    investor.kycStatus = "approved";
+    throw new Error("Investor KYC must be approved before whitelist");
   }
 
   const asset = state.assets.find((a) => a.id === input.assetId);
@@ -183,11 +238,22 @@ export async function addToWhitelist(input: {
   );
   if (duplicate) return duplicate;
 
+  let status: WhitelistStatus = "requested";
+  let onchainTxHash: string | null = null;
+  if (input.onchainTxHash) {
+    onchainTxHash = assertTxHash(input.onchainTxHash, "onchainTxHash");
+    status = "onchain";
+  } else if (isDemoLedgerMode()) {
+    status = "onchain";
+  }
+
   const entry: WhitelistEntry = {
     id: createId("wl"),
     investorId: investor.id,
     assetId: asset.id,
     walletAddress: wallet,
+    onchainTxHash,
+    status,
     createdAt: new Date().toISOString(),
   };
   investor.whitelisted = true;
@@ -206,6 +272,8 @@ export async function mintTokens(input: {
   assetId: string;
   toWallet: string;
   amount: number;
+  txHash?: string;
+  blockNumber?: number | null;
 }): Promise<MintRecord> {
   await hydrate();
   const state = getState();
@@ -225,8 +293,13 @@ export async function mintTokens(input: {
     throw new Error("Mint would exceed total supply");
   }
 
-  if (!asset.contractAddress) {
+  if (!asset.contractAddress && isDemoLedgerMode()) {
     asset.contractAddress = createContractAddress();
+  }
+
+  const { txHash, status } = resolveTxHash(input.txHash);
+  if (state.mints.some((m) => m.txHash === txHash)) {
+    throw new Error("Mint with this txHash already recorded");
   }
 
   asset.mintedSupply += input.amount;
@@ -235,7 +308,9 @@ export async function mintTokens(input: {
     assetId: asset.id,
     toWallet: wallet,
     amount: input.amount,
-    txHash: createTxHash(),
+    txHash,
+    blockNumber: input.blockNumber ?? null,
+    status,
     createdAt: new Date().toISOString(),
   };
   state.mints.unshift(record);
@@ -254,6 +329,8 @@ export async function transferTokens(input: {
   fromWallet: string;
   toWallet: string;
   amount: number;
+  txHash?: string;
+  blockNumber?: number | null;
 }): Promise<TransferRecord> {
   await hydrate();
   const state = getState();
@@ -278,13 +355,20 @@ export async function transferTokens(input: {
     throw new Error("Insufficient token balance");
   }
 
+  const { txHash, status } = resolveTxHash(input.txHash);
+  if (state.transfers.some((t) => t.txHash === txHash)) {
+    throw new Error("Transfer with this txHash already recorded");
+  }
+
   const record: TransferRecord = {
     id: createId("xfer"),
     assetId: asset.id,
     fromWallet: from,
     toWallet: to,
     amount: input.amount,
-    txHash: createTxHash(),
+    txHash,
+    blockNumber: input.blockNumber ?? null,
+    status,
     createdAt: new Date().toISOString(),
   };
   state.transfers.unshift(record);
@@ -319,6 +403,7 @@ export async function createAsset(input: {
     issuerId: input.issuerId,
     chain: input.chain,
     contractAddress: null,
+    status: "draft",
     createdAt: new Date().toISOString(),
   };
   state.assets.unshift(asset);
@@ -337,13 +422,28 @@ export async function balanceOf(
   const state = getState();
   const normalized = wallet.toLowerCase();
   const minted = state.mints
-    .filter((m) => m.assetId === assetId && m.toWallet === normalized)
+    .filter(
+      (m) =>
+        m.assetId === assetId &&
+        m.toWallet === normalized &&
+        m.status !== "failed",
+    )
     .reduce((sum, m) => sum + m.amount, 0);
   const received = state.transfers
-    .filter((t) => t.assetId === assetId && t.toWallet === normalized)
+    .filter(
+      (t) =>
+        t.assetId === assetId &&
+        t.toWallet === normalized &&
+        t.status !== "failed",
+    )
     .reduce((sum, t) => sum + t.amount, 0);
   const sent = state.transfers
-    .filter((t) => t.assetId === assetId && t.fromWallet === normalized)
+    .filter(
+      (t) =>
+        t.assetId === assetId &&
+        t.fromWallet === normalized &&
+        t.status !== "failed",
+    )
     .reduce((sum, t) => sum + t.amount, 0);
   return minted + received - sent;
 }

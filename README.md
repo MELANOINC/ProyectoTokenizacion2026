@@ -11,7 +11,8 @@ Hub: **aLENYA** capta → **LUXIA** convierte → **NOTORIUS** tokeniza.
 - **App / API / Dashboard:** Next.js (App Router) + TypeScript + Tailwind
 - **Contracts:** Solidity scaffolds (ERC-3643 style) en `/contracts`
 - **Docs:** Whitepaper + manual legal draft en `/docs`
-- **Deploy:** Render Blueprint (`render.yaml`) — bind `0.0.0.0:$PORT`
+- **DB:** Supabase `notorius_*` via `supabase/migrations/`
+- **Deploy:** Vercel (`notorius.melanoinc.com`) · Render Blueprint optional (`render.yaml`)
 
 ## Quick start
 
@@ -31,9 +32,9 @@ Open [http://localhost:3000](http://localhost:3000).
 | `/dashboard` | Resumen operativo |
 | `/dashboard/ecosistema` | Hub Melano E2E + handoff demo |
 | `/#guia` | Guía interactiva de tokenización |
-| `/dashboard/admin` | KYC + whitelist + historial (demo API) |
-| `/dashboard/emisor` | Alta de activos, mint, transfers (demo API) |
-| `/dashboard/inversores` | Registro y whitelist (demo API) |
+| `/dashboard/admin` | KYC approve/reject + whitelist + ledger txHash |
+| `/dashboard/emisor` | Alta de activos, mint/transfer (requiere txHash en prod) |
+| `/dashboard/inversores` | Registro + whitelist (KYC approved) |
 | `/docs` | Índice de documentación |
 
 ### On-chain (MetaMask / Polygon)
@@ -50,27 +51,28 @@ npm run compile:contracts   # regenera ABI + bytecode en src/lib/web3/artifacts
 
 ## API
 
-- `POST /api/investor/register`
-- `POST /api/whitelist`
-- `POST /api/mint`
-- `POST /api/transfer`
+- `POST /api/investor/register` — KYC pending
+- `POST /api/kyc/review` — operator: approve/reject
+- `POST /api/whitelist` — operator; KYC must be approved
+- `POST /api/mint` · `POST /api/transfer` — operator; **real `txHash` required in production**
+- `POST /api/ledger/confirm` — confirm on-chain action into ledger
 - `GET|POST /api/assets`
-- `POST /api/ecosystem/handoff` — Alenya / Luxia / Bruno Melano → inversor NOTORIUS (+ whitelist)
-- `GET /api/ecosystem/status` — pipeline counts + últimos handoffs
-- `GET /api/health`
-- `GET /api/health/integrations` — safe probes for optional Supabase / Mercado Pago / Hostinger (no writes)
-- `npm run probe:integrations` — same probes from CLI (loads `.env.local` overrides)
+- `POST /api/ecosystem/handoff` — requires `ECOSYSTEM_HANDOFF_SECRET` in production
+- `GET /api/ecosystem/status`
+- `GET /api/health` · `GET /api/health/integrations`
 
 ### Ecosystem handoff
 
 ```bash
-curl -X POST https://proyectomelanoinc.vercel.app/api/ecosystem/handoff \
+curl -X POST https://notorius.melanoinc.com/api/ecosystem/handoff \
   -H "Content-Type: application/json" \
   -H "x-melano-handoff-secret: $ECOSYSTEM_HANDOFF_SECRET" \
-  -d '{"source":"luxia","name":"Ana","email":"ana@cliente.com","autoWhitelist":true}'
+  -d '{"source":"luxia","name":"Ana","email":"ana@cliente.com","autoWhitelist":false}'
 ```
 
-With `NEXT_PUBLIC_SUPABASE_URL` + anon/service key, state persists in `notorius_*` tables (melano-crm). Without env, demo data stays in-memory (wallet `0x1111…1111` whitelistada sobre `asset_puerto_madero`).
+SQL migrations: `supabase/migrations/`. Apply before enabling Supabase persistence. Without env (or with `NOTORIUS_FORCE_MEMORY=1`), demo data stays in-memory.
+
+**Capital-real note:** contracts are role-hardened but **not audited**. Manual KYC + on-chain txHash ledger are foundation steps — not a CNV green light.
 
 ## Ecosystem position
 

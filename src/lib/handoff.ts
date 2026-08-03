@@ -10,7 +10,9 @@ import {
   findInvestor,
   getSnapshot,
   registerInvestor,
+  reviewKyc,
 } from "@/lib/store";
+import { isDemoLedgerMode } from "@/lib/ledger-mode";
 import { getSupabase } from "@/lib/supabase";
 import type { HandoffSource } from "@/lib/ecosystem";
 import type { Investor } from "@/lib/types";
@@ -100,24 +102,39 @@ export async function processHandoff(
     const snap = await getSnapshot();
     const assetExists = snap.assets.some((a) => a.id === assetId);
 
+    // Production: whitelist only if KYC already approved.
+    // Demo/memory: optional autoWhitelist may approve KYC then whitelist for PoC tests.
     if (autoWhitelist && assetExists) {
-      await addToWhitelist({
-        investorId: investor.id,
-        assetId,
-        walletAddress: wallet,
-      });
-      handoff.status = "whitelisted";
-      whitelisted = true;
-      investor = (await findInvestor({ email: input.email })) ?? investor;
+      if (investor.kycStatus !== "approved" && isDemoLedgerMode()) {
+        investor = await reviewKyc({
+          investorId: investor.id,
+          decision: "approved",
+          notes: "demo autoWhitelist",
+        });
+      }
+      if (investor.kycStatus === "approved") {
+        await addToWhitelist({
+          investorId: investor.id,
+          assetId,
+          walletAddress: wallet,
+        });
+        handoff.status = "whitelisted";
+        whitelisted = true;
+        investor = (await findInvestor({ email: input.email })) ?? investor;
+      }
     }
 
     handoff.updatedAt = new Date().toISOString();
     if (client) {
-      await updateHandoff(client, handoff.id, {
-        status: handoff.status,
-        investorId: handoff.investorId,
-        updatedAt: handoff.updatedAt,
-      });
+      try {
+        await updateHandoff(client, handoff.id, {
+          status: handoff.status,
+          investorId: handoff.investorId,
+          updatedAt: handoff.updatedAt,
+        });
+      } catch (error) {
+        console.error("[handoff] persist success update", error);
+      }
     }
 
     return { handoff, investor, whitelisted };
@@ -127,11 +144,15 @@ export async function processHandoff(
     handoff.errorMessage = message;
     handoff.updatedAt = new Date().toISOString();
     if (client) {
-      await updateHandoff(client, handoff.id, {
-        status: "error",
-        errorMessage: message,
-        updatedAt: handoff.updatedAt,
-      });
+      try {
+        await updateHandoff(client, handoff.id, {
+          status: "error",
+          errorMessage: message,
+          updatedAt: handoff.updatedAt,
+        });
+      } catch (persistError) {
+        console.error("[handoff] persist error update", persistError);
+      }
     }
     throw error;
   }

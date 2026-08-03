@@ -31,3 +31,9 @@ services:
         sync: false
       - key: MERCADOPAGO_PUBLIC_KEY
         sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: ECOSYSTEM_HANDOFF_SECRET
+        sync: false
+      - key: NOTORIUS_OPERATOR_KEY
+        sync: false

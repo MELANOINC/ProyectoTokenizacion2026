@@ -1,11 +1,15 @@
 import { jsonError, jsonOk } from "@/lib/api";
+import { isProductionHardening } from "@/lib/ledger-mode";
 import { processHandoff } from "@/lib/handoff";
 import { handoffSchema } from "@/lib/validation";
 
 function authorize(request: Request): boolean {
   const secret = process.env.ECOSYSTEM_HANDOFF_SECRET?.trim();
   if (!secret) {
-    // Open in demo / local when secret is not set
+    // Production must set ECOSYSTEM_HANDOFF_SECRET. Local/dev/demo may stay open.
+    if (isProductionHardening() || process.env.NODE_ENV === "production") {
+      return false;
+    }
     return true;
   }
   const header =
@@ -16,7 +20,12 @@ function authorize(request: Request): boolean {
 
 export async function POST(request: Request) {
   if (!authorize(request)) {
-    return jsonError(new Error("Unauthorized handoff"), 401);
+    return jsonError(
+      new Error(
+        "Unauthorized handoff — set ECOSYSTEM_HANDOFF_SECRET and pass x-melano-handoff-secret",
+      ),
+      401,
+    );
   }
 
   try {

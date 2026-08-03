@@ -1,35 +1,27 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { GUIDE_LESSONS, GUIDE_STORAGE_KEY, type GuideLesson } from "@/lib/guide";
-
-function readCompleted(): string[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = window.localStorage.getItem(GUIDE_STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw) as unknown;
-    return Array.isArray(parsed)
-      ? parsed.filter((id): id is string => typeof id === "string")
-      : [];
-  } catch {
-    return [];
-  }
-}
-
-function writeCompleted(ids: string[]) {
-  window.localStorage.setItem(GUIDE_STORAGE_KEY, JSON.stringify(ids));
-}
+import { useCallback, useMemo, useState, useSyncExternalStore } from "react";
+import { GUIDE_LESSONS, type GuideLesson } from "@/lib/guide";
+import {
+  getGuideCompletedServerSnapshot,
+  getGuideCompletedSnapshot,
+  subscribeGuideCompleted,
+  writeGuideCompleted,
+} from "@/lib/guide-storage";
 
 export function GuideSection() {
   const [activeId, setActiveId] = useState(GUIDE_LESSONS[0].id);
-  const [completed, setCompleted] = useState<string[]>([]);
   const [flash, setFlash] = useState<string | null>(null);
-
-  useEffect(() => {
-    setCompleted(readCompleted());
-  }, []);
+  const completedRaw = useSyncExternalStore(
+    subscribeGuideCompleted,
+    getGuideCompletedSnapshot,
+    getGuideCompletedServerSnapshot,
+  );
+  const completed = useMemo(
+    () => JSON.parse(completedRaw) as string[],
+    [completedRaw],
+  );
 
   const active: GuideLesson = useMemo(
     () => GUIDE_LESSONS.find((l) => l.id === activeId) ?? GUIDE_LESSONS[0],
@@ -44,8 +36,7 @@ export function GuideSection() {
     const next = completed.includes(active.id)
       ? completed
       : [...completed, active.id];
-    setCompleted(next);
-    writeCompleted(next);
+    writeGuideCompleted(next);
     setFlash("Marcado en demo");
     window.setTimeout(() => setFlash(null), 1600);
 
@@ -66,7 +57,6 @@ export function GuideSection() {
         </h2>
 
         <div className="mt-10 grid gap-5 lg:grid-cols-[minmax(240px,0.9fr)_1.4fr]">
-          {/* Sidebar */}
           <aside className="panel overflow-hidden rounded-2xl p-2">
             <ul className="space-y-2">
               {GUIDE_LESSONS.map((lesson, index) => {
@@ -103,7 +93,6 @@ export function GuideSection() {
             </ul>
           </aside>
 
-          {/* Content */}
           <article className="panel relative flex min-h-[320px] flex-col rounded-2xl p-6 md:p-8">
             <h3 className="font-[family-name:var(--font-display)] text-2xl font-bold tracking-tight text-[var(--w)] md:text-3xl">
               {active.title}
