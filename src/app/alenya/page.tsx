@@ -114,9 +114,9 @@ export default function AlenyaLandingPage() {
               <a href="https://luxia.melanoinc.com" className="hover:text-[var(--gold)]">
                 Luxia
               </a>
-              <a href="/" className="hover:text-[var(--gold)]">
+              <Link href="/" className="hover:text-[var(--gold)]">
                 NOTORIUS
-              </a>
+              </Link>
             </div>
           </div>
         </footer>

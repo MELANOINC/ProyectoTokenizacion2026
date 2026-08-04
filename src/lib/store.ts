@@ -9,7 +9,7 @@ import {
   upsertWhitelist,
   insertKycReview,
 } from "@/lib/store-db";
-import { getSupabase } from "@/lib/supabase";
+import { getSupabase, isSupabaseConfigured } from "@/lib/supabase";
 import type {
   Investor,
   KycStatus,
@@ -144,6 +144,10 @@ export async function getSnapshot(): Promise<PlatformState> {
     mints: [...state.mints],
     transfers: [...state.transfers],
   };
+}
+
+export function getPersistenceMode(): "supabase" | "memory" {
+  return isSupabaseConfigured() ? "supabase" : "memory";
 }
 
 export async function registerInvestor(input: {
