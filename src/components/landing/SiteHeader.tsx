@@ -1,6 +1,5 @@
 import Image from "next/image";
 import Link from "next/link";
-import { CTA } from "@/lib/cta";
 
 export function SiteHeader() {
   return (
@@ -35,17 +34,15 @@ export function SiteHeader() {
           <Link href="#ecosistema" className="hidden hover:text-[var(--w)] md:inline">
             Ecosistema
           </Link>
-          <Link href="/dashboard" className="hidden hover:text-[var(--w)] md:inline">
-            Dashboard
+          <Link href="/precios" className="hidden hover:text-[var(--w)] md:inline">
+            Precios
           </Link>
-          <a
-            href={CTA.calendly}
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            href="/precios"
             className="border border-[var(--gold-lo)] bg-[var(--gold)] px-4 py-2 font-semibold text-[#14110a] transition hover:bg-[var(--gold-hi)]"
           >
-            Agendar diagnóstico
-          </a>
+            Contratar
+          </Link>
         </nav>
       </div>
     </header>

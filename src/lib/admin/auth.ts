@@ -1,15 +1,23 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
-import {
-  ALENYA_PANEL_PASSWORD,
-  ALENYA_SESSION_COOKIE,
-  ALENYA_SESSION_DAYS,
-} from "@/lib/alenya/config";
+import { ADMIN_SESSION_COOKIE } from "@/lib/admin/config";
+
+export { ADMIN_SESSION_COOKIE };
+const ADMIN_SESSION_DAYS = 7;
+
+function adminPassword(): string {
+  return (
+    process.env.NOTORIUS_ADMIN_PASSWORD?.trim() ||
+    process.env.ALENYA_PANEL_PASSWORD?.trim() ||
+    ""
+  );
+}
 
 function secret(): string {
   return (
+    process.env.NOTORIUS_ADMIN_SESSION_SECRET?.trim() ||
     process.env.ALENYA_SESSION_SECRET?.trim() ||
     process.env.SUPABASE_JWT_SECRET?.trim() ||
-    ALENYA_PANEL_PASSWORD
+    adminPassword()
   );
 }
 
@@ -17,16 +25,18 @@ function sign(payload: string): string {
   return createHmac("sha256", secret()).update(payload).digest("base64url");
 }
 
-export function createSessionToken(now = Date.now()): string {
-  const exp = now + ALENYA_SESSION_DAYS * 24 * 60 * 60 * 1000;
-  const body = `alenya:${exp}`;
+export function createAdminSessionToken(now = Date.now()): string {
+  const exp = now + ADMIN_SESSION_DAYS * 24 * 60 * 60 * 1000;
+  const body = `admin:${exp}`;
   return `${body}.${sign(body)}`;
 }
 
-export function verifySessionToken(token: string | undefined | null): boolean {
+export function verifyAdminSessionToken(
+  token: string | undefined | null,
+): boolean {
   if (!token) return false;
   const [body, sig] = token.split(".");
-  if (!body || !sig) return false;
+  if (!body || !sig || !body.startsWith("admin:")) return false;
   const expected = sign(body);
   try {
     const a = Buffer.from(sig);
@@ -39,24 +49,23 @@ export function verifySessionToken(token: string | undefined | null): boolean {
   return Number.isFinite(exp) && Date.now() < exp;
 }
 
-export function verifyPanelPassword(password: string): boolean {
-  if (!ALENYA_PANEL_PASSWORD || !password) return false;
-  const expected = Buffer.from(ALENYA_PANEL_PASSWORD);
+export function verifyAdminPassword(password: string): boolean {
+  const expectedPw = adminPassword();
+  if (!expectedPw || !password) return false;
+  const expected = Buffer.from(expectedPw);
   const got = Buffer.from(password);
   if (expected.length !== got.length) return false;
   return timingSafeEqual(expected, got);
 }
 
-export function sessionCookieOptions(token: string) {
+export function adminCookieOptions(token: string) {
   return {
-    name: ALENYA_SESSION_COOKIE,
+    name: ADMIN_SESSION_COOKIE,
     value: token,
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax" as const,
     path: "/",
-    maxAge: ALENYA_SESSION_DAYS * 24 * 60 * 60,
+    maxAge: ADMIN_SESSION_DAYS * 24 * 60 * 60,
   };
 }
-
-export { ALENYA_SESSION_COOKIE };

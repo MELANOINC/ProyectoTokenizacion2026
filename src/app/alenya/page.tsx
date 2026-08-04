@@ -39,14 +39,17 @@ export default function AlenyaLandingPage() {
               estándar visual que Luxia y NOTORIUS.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link
-                href="/alenya/login?returnTo=/alenya/dashboard"
-                className="btn-primary"
-              >
-                Abrir Command Center
+              <Link href="/precios" className="btn-primary">
+                Ver planes y contratar
               </Link>
               <Link href="#flujo" className="btn-ghost">
                 Ver flujo
+              </Link>
+              <Link
+                href="/alenya/login?returnTo=/alenya/dashboard"
+                className="btn-ghost"
+              >
+                Ya soy cliente
               </Link>
             </div>
           </div>
@@ -96,8 +99,14 @@ export default function AlenyaLandingPage() {
           <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6 text-sm text-[var(--g1)] md:px-10">
             <p>© Melano Inc · aLENYA · AI. Automation. Impact.</p>
             <div className="flex gap-5">
-              <Link href="/alenya/dashboard" className="hover:text-[var(--gold)]">
-                Dashboard
+              <Link href="/precios" className="hover:text-[var(--gold)]">
+                Precios
+              </Link>
+              <Link
+                href="/alenya/login?returnTo=/alenya/dashboard"
+                className="hover:text-[var(--gold)]"
+              >
+                Acceso cliente
               </Link>
               <Link href="/alenya/sop" className="hover:text-[var(--gold)]">
                 SOP

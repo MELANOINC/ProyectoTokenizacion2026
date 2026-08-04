@@ -1,13 +1,18 @@
+import { requireAdminApi } from "@/lib/admin/require-admin";
 import { jsonError, jsonOk } from "@/lib/api";
 import { getSnapshot, registerInvestor } from "@/lib/store";
 import { registerInvestorSchema } from "@/lib/validation";
 
 export async function GET() {
+  const denied = await requireAdminApi();
+  if (denied) return denied;
   const { investors } = await getSnapshot();
   return jsonOk({ investors });
 }
 
 export async function POST(request: Request) {
+  const denied = await requireAdminApi();
+  if (denied) return denied;
   try {
     const body = await request.json();
     const input = registerInvestorSchema.parse(body);
