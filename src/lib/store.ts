@@ -1,49 +1,41 @@
 import { createContractAddress, createId, createTxHash } from "@/lib/ids";
-import { getSupabaseConfig } from "@/lib/supabase/config";
+import { assertTxHash, isDemoLedgerMode } from "@/lib/ledger-mode";
 import {
-  loadPlatformFromSupabase,
-  persistAsset,
-  persistInvestor,
-  persistInvestorKyc,
-  persistMint,
-  persistTransfer,
-  persistWhitelistEntry,
-} from "@/lib/supabase/repository";
+  insertMint,
+  insertTransfer,
+  loadPlatformState,
+  upsertAsset,
+  upsertInvestor,
+  upsertWhitelist,
+  insertKycReview,
+} from "@/lib/store-db";
+import { getSupabase, isSupabaseConfigured } from "@/lib/supabase";
 import type {
   Investor,
+  KycStatus,
+  LedgerStatus,
   MintRecord,
   PlatformState,
   TokenizedAsset,
   TransferRecord,
   WhitelistEntry,
+  WhitelistStatus,
 } from "@/lib/types";
-import { randomUUID } from "crypto";
 
 /**
- * Platform store: in-memory with optional Supabase dual-write
- * (assets / investors / tokenizations / investments).
- * Whitelist + transfers stay in-memory until dedicated tables exist.
+ * In-memory cache hydrated from Supabase when configured.
+ * Without Supabase env, operates as the original ephemeral demo store.
  */
 const globalForStore = globalThis as typeof globalThis & {
   __notoriusStore?: PlatformState;
-  __notoriusHydrate?: Promise<void>;
+  __notoriusHydrated?: boolean;
+  __notoriusHydratePromise?: Promise<void>;
 };
 
-function entityId(prefix: string): string {
-  if (getSupabaseConfig()) return randomUUID();
-  return createId(prefix);
-}
-
 function seedState(): PlatformState {
-  const useUuid = Boolean(getSupabaseConfig());
-  const issuerId = useUuid
-    ? (getSupabaseConfig()?.companyId ?? "issuer_demo")
-    : "issuer_demo";
-
+  const issuerId = "issuer_demo";
   const asset: TokenizedAsset = {
-    id: useUuid
-      ? "a1111111-1111-4111-8111-111111111111"
-      : "asset_puerto_madero",
+    id: "asset_puerto_madero",
     name: "Torre Núñez — Puerto Madero",
     class: "property",
     symbol: "TNPM",
@@ -52,13 +44,12 @@ function seedState(): PlatformState {
     issuerId,
     chain: "polygon",
     contractAddress: "0x3643a11c0de0f0a0b0c0d0e0f0a1b2c3d4e5f678",
+    status: "draft",
     createdAt: new Date("2026-06-01T12:00:00.000Z").toISOString(),
   };
 
   const investor: Investor = {
-    id: useUuid
-      ? "b2222222-2222-4222-8222-222222222222"
-      : "inv_demo_ana",
+    id: "inv_demo_ana",
     name: "Ana Ríos",
     email: "ana@example.com",
     walletAddress: "0x1111111111111111111111111111111111111111",
@@ -68,23 +59,21 @@ function seedState(): PlatformState {
   };
 
   const whitelist: WhitelistEntry = {
-    id: useUuid
-      ? "c3333333-3333-4333-8333-333333333333"
-      : "wl_demo_1",
+    id: "wl_demo_1",
     investorId: investor.id,
     assetId: asset.id,
     walletAddress: investor.walletAddress,
+    status: "onchain",
     createdAt: new Date("2026-06-03T12:00:00.000Z").toISOString(),
   };
 
   const mint: MintRecord = {
-    id: useUuid
-      ? "d4444444-4444-4444-8444-444444444444"
-      : "mint_demo_1",
+    id: "mint_demo_1",
     assetId: asset.id,
     toWallet: investor.walletAddress,
     amount: 125_000,
     txHash: "0xabc123def456abc123def456abc123def456abc123def456abc123def456abcd",
+    status: "confirmed",
     createdAt: new Date("2026-06-04T12:00:00.000Z").toISOString(),
   };
 
@@ -97,45 +86,32 @@ function seedState(): PlatformState {
   };
 }
 
-async function hydrateFromSupabase(state: PlatformState): Promise<void> {
+async function hydrate(): Promise<void> {
+  if (globalForStore.__notoriusHydrated) return;
+  if (globalForStore.__notoriusHydratePromise) {
+    await globalForStore.__notoriusHydratePromise;
+    return;
+  }
+
+  globalForStore.__notoriusHydratePromise = (async () => {
+    const client = getSupabase();
+    if (client) {
+      const remote = await loadPlatformState(client);
+      if (remote) {
+        globalForStore.__notoriusStore = remote;
+      } else if (!globalForStore.__notoriusStore) {
+        globalForStore.__notoriusStore = seedState();
+      }
+    } else if (!globalForStore.__notoriusStore) {
+      globalForStore.__notoriusStore = seedState();
+    }
+    globalForStore.__notoriusHydrated = true;
+  })();
+
   try {
-    const remote = await loadPlatformFromSupabase();
-    if (!remote) return;
-
-    if (remote.assets.length > 0) {
-      state.assets = remote.assets;
-    } else if (state.assets[0]) {
-      await persistAsset(state.assets[0]).catch(() => undefined);
-    }
-
-    if (remote.investors.length > 0) {
-      state.investors = remote.investors;
-    } else if (state.investors[0]) {
-      await persistInvestor(state.investors[0]).catch(() => undefined);
-    }
-
-    if (remote.whitelist.length > 0) {
-      state.whitelist = remote.whitelist;
-    } else if (state.whitelist[0]) {
-      await persistWhitelistEntry(state.whitelist[0]).catch(() => undefined);
-    }
-
-    if (remote.mints.length > 0) {
-      state.mints = remote.mints;
-    } else if (state.mints[0] && state.investors[0]) {
-      await persistMint({
-        assetId: state.mints[0].assetId,
-        investorId: state.investors[0].id,
-        amount: state.mints[0].amount,
-        createdAt: state.mints[0].createdAt,
-      }).catch(() => undefined);
-    }
-
-    if (remote.transfers.length > 0) {
-      state.transfers = remote.transfers;
-    }
-  } catch {
-    // Keep seed / memory state when remote is unreachable.
+    await globalForStore.__notoriusHydratePromise;
+  } finally {
+    globalForStore.__notoriusHydratePromise = undefined;
   }
 }
 
@@ -146,18 +122,21 @@ function getState(): PlatformState {
   return globalForStore.__notoriusStore;
 }
 
-async function ensureReady(): Promise<PlatformState> {
-  const state = getState();
-  if (!getSupabaseConfig()) return state;
-
-  if (!globalForStore.__notoriusHydrate) {
-    globalForStore.__notoriusHydrate = hydrateFromSupabase(state);
+function resolveTxHash(input?: string): { txHash: string; status: LedgerStatus } {
+  if (input) {
+    return { txHash: assertTxHash(input), status: "confirmed" };
   }
-  await globalForStore.__notoriusHydrate;
-  return state;
+  if (isDemoLedgerMode()) {
+    return { txHash: createTxHash(), status: "confirmed" };
+  }
+  throw new Error(
+    "txHash is required — confirm the on-chain transaction before recording the ledger entry",
+  );
 }
 
-function snapshotOf(state: PlatformState): PlatformState {
+export async function getSnapshot(): Promise<PlatformState> {
+  await hydrate();
+  const state = getState();
   return {
     assets: [...state.assets],
     investors: [...state.investors],
@@ -167,13 +146,8 @@ function snapshotOf(state: PlatformState): PlatformState {
   };
 }
 
-export async function getSnapshot(): Promise<PlatformState> {
-  const state = await ensureReady();
-  return snapshotOf(state);
-}
-
 export function getPersistenceMode(): "supabase" | "memory" {
-  return getSupabaseConfig() ? "supabase" : "memory";
+  return isSupabaseConfigured() ? "supabase" : "memory";
 }
 
 export async function registerInvestor(input: {
@@ -181,7 +155,8 @@ export async function registerInvestor(input: {
   email: string;
   walletAddress: string;
 }): Promise<Investor> {
-  const state = await ensureReady();
+  await hydrate();
+  const state = getState();
   const existing = state.investors.find(
     (i) =>
       i.email.toLowerCase() === input.email.toLowerCase() ||
@@ -192,7 +167,7 @@ export async function registerInvestor(input: {
   }
 
   const investor: Investor = {
-    id: entityId("inv"),
+    id: createId("inv"),
     name: input.name,
     email: input.email.toLowerCase(),
     walletAddress: input.walletAddress.toLowerCase(),
@@ -201,7 +176,44 @@ export async function registerInvestor(input: {
     createdAt: new Date().toISOString(),
   };
   state.investors.unshift(investor);
-  await persistInvestor(investor).catch(() => undefined);
+
+  const client = getSupabase();
+  if (client) await upsertInvestor(client, investor);
+
+  return investor;
+}
+
+export async function reviewKyc(input: {
+  investorId: string;
+  decision: Extract<KycStatus, "approved" | "rejected">;
+  reviewerId?: string | null;
+  notes?: string | null;
+}): Promise<Investor> {
+  await hydrate();
+  const state = getState();
+  const investor = state.investors.find((i) => i.id === input.investorId);
+  if (!investor) throw new Error("Investor not found");
+
+  investor.kycStatus = input.decision;
+  investor.kycReviewedAt = new Date().toISOString();
+  investor.kycReviewedBy = input.reviewerId ?? null;
+  if (input.decision === "rejected") {
+    investor.whitelisted = false;
+  }
+
+  const client = getSupabase();
+  if (client) {
+    await upsertInvestor(client, investor);
+    await insertKycReview(client, {
+      id: createId("kyc"),
+      investorId: investor.id,
+      decision: input.decision,
+      reviewerId: input.reviewerId ?? null,
+      notes: input.notes ?? null,
+      createdAt: investor.kycReviewedAt,
+    });
+  }
+
   return investor;
 }
 
@@ -209,13 +221,14 @@ export async function addToWhitelist(input: {
   investorId: string;
   assetId: string;
   walletAddress?: string;
+  onchainTxHash?: string;
 }): Promise<WhitelistEntry> {
-  const state = await ensureReady();
+  await hydrate();
+  const state = getState();
   const investor = state.investors.find((i) => i.id === input.investorId);
   if (!investor) throw new Error("Investor not found");
   if (investor.kycStatus !== "approved") {
-    investor.kycStatus = "approved";
-    await persistInvestorKyc(investor.id, "approved").catch(() => undefined);
+    throw new Error("Investor KYC must be approved before whitelist");
   }
 
   const asset = state.assets.find((a) => a.id === input.assetId);
@@ -229,16 +242,33 @@ export async function addToWhitelist(input: {
   );
   if (duplicate) return duplicate;
 
+  let status: WhitelistStatus = "requested";
+  let onchainTxHash: string | null = null;
+  if (input.onchainTxHash) {
+    onchainTxHash = assertTxHash(input.onchainTxHash, "onchainTxHash");
+    status = "onchain";
+  } else if (isDemoLedgerMode()) {
+    status = "onchain";
+  }
+
   const entry: WhitelistEntry = {
-    id: entityId("wl"),
+    id: createId("wl"),
     investorId: investor.id,
     assetId: asset.id,
     walletAddress: wallet,
+    onchainTxHash,
+    status,
     createdAt: new Date().toISOString(),
   };
   investor.whitelisted = true;
   state.whitelist.unshift(entry);
-  await persistWhitelistEntry(entry).catch(() => undefined);
+
+  const client = getSupabase();
+  if (client) {
+    await upsertInvestor(client, investor);
+    await upsertWhitelist(client, entry);
+  }
+
   return entry;
 }
 
@@ -246,8 +276,11 @@ export async function mintTokens(input: {
   assetId: string;
   toWallet: string;
   amount: number;
+  txHash?: string;
+  blockNumber?: number | null;
 }): Promise<MintRecord> {
-  const state = await ensureReady();
+  await hydrate();
+  const state = getState();
   const asset = state.assets.find((a) => a.id === input.assetId);
   if (!asset) throw new Error("Asset not found");
 
@@ -264,32 +297,32 @@ export async function mintTokens(input: {
     throw new Error("Mint would exceed total supply");
   }
 
-  if (!asset.contractAddress) {
+  if (!asset.contractAddress && isDemoLedgerMode()) {
     asset.contractAddress = createContractAddress();
+  }
+
+  const { txHash, status } = resolveTxHash(input.txHash);
+  if (state.mints.some((m) => m.txHash === txHash)) {
+    throw new Error("Mint with this txHash already recorded");
   }
 
   asset.mintedSupply += input.amount;
   const record: MintRecord = {
-    id: entityId("mint"),
+    id: createId("mint"),
     assetId: asset.id,
     toWallet: wallet,
     amount: input.amount,
-    txHash: createTxHash(),
+    txHash,
+    blockNumber: input.blockNumber ?? null,
+    status,
     createdAt: new Date().toISOString(),
   };
   state.mints.unshift(record);
 
-  const investor = state.investors.find(
-    (i) => i.walletAddress.toLowerCase() === wallet,
-  );
-  if (investor) {
-    const remoteId = await persistMint({
-      assetId: asset.id,
-      investorId: investor.id,
-      amount: input.amount,
-      createdAt: record.createdAt,
-    }).catch(() => null);
-    if (remoteId) record.id = remoteId;
+  const client = getSupabase();
+  if (client) {
+    await upsertAsset(client, asset);
+    await insertMint(client, record);
   }
 
   return record;
@@ -300,8 +333,11 @@ export async function transferTokens(input: {
   fromWallet: string;
   toWallet: string;
   amount: number;
+  txHash?: string;
+  blockNumber?: number | null;
 }): Promise<TransferRecord> {
-  const state = await ensureReady();
+  await hydrate();
+  const state = getState();
   const asset = state.assets.find((a) => a.id === input.assetId);
   if (!asset) throw new Error("Asset not found");
 
@@ -318,22 +354,32 @@ export async function transferTokens(input: {
     throw new Error("Both wallets must be whitelisted for controlled transfers");
   }
 
-  const fromBalance = balanceOfSync(state, asset.id, from);
+  const fromBalance = await balanceOf(asset.id, from);
   if (fromBalance < input.amount) {
     throw new Error("Insufficient token balance");
   }
 
+  const { txHash, status } = resolveTxHash(input.txHash);
+  if (state.transfers.some((t) => t.txHash === txHash)) {
+    throw new Error("Transfer with this txHash already recorded");
+  }
+
   const record: TransferRecord = {
-    id: entityId("xfer"),
+    id: createId("xfer"),
     assetId: asset.id,
     fromWallet: from,
     toWallet: to,
     amount: input.amount,
-    txHash: createTxHash(),
+    txHash,
+    blockNumber: input.blockNumber ?? null,
+    status,
     createdAt: new Date().toISOString(),
   };
   state.transfers.unshift(record);
-  await persistTransfer(record).catch(() => undefined);
+
+  const client = getSupabase();
+  if (client) await insertTransfer(client, record);
+
   return record;
 }
 
@@ -345,51 +391,87 @@ export async function createAsset(input: {
   issuerId: string;
   chain: TokenizedAsset["chain"];
 }): Promise<TokenizedAsset> {
-  const state = await ensureReady();
+  await hydrate();
+  const state = getState();
   if (state.assets.some((a) => a.symbol === input.symbol)) {
     throw new Error("Asset symbol already exists");
   }
 
-  const config = getSupabaseConfig();
   const asset: TokenizedAsset = {
-    id: entityId("asset"),
+    id: createId("asset"),
     name: input.name,
     class: input.class,
     symbol: input.symbol.toUpperCase(),
     totalSupply: input.totalSupply,
     mintedSupply: 0,
-    issuerId: config?.companyId ?? input.issuerId,
+    issuerId: input.issuerId,
     chain: input.chain,
     contractAddress: null,
+    status: "draft",
     createdAt: new Date().toISOString(),
   };
   state.assets.unshift(asset);
-  await persistAsset(asset).catch(() => undefined);
-  return asset;
-}
 
-function balanceOfSync(
-  state: PlatformState,
-  assetId: string,
-  wallet: string,
-): number {
-  const normalized = wallet.toLowerCase();
-  const minted = state.mints
-    .filter((m) => m.assetId === assetId && m.toWallet === normalized)
-    .reduce((sum, m) => sum + m.amount, 0);
-  const received = state.transfers
-    .filter((t) => t.assetId === assetId && t.toWallet === normalized)
-    .reduce((sum, t) => sum + t.amount, 0);
-  const sent = state.transfers
-    .filter((t) => t.assetId === assetId && t.fromWallet === normalized)
-    .reduce((sum, t) => sum + t.amount, 0);
-  return minted + received - sent;
+  const client = getSupabase();
+  if (client) await upsertAsset(client, asset);
+
+  return asset;
 }
 
 export async function balanceOf(
   assetId: string,
   wallet: string,
 ): Promise<number> {
-  const state = await ensureReady();
-  return balanceOfSync(state, assetId, wallet);
+  await hydrate();
+  const state = getState();
+  const normalized = wallet.toLowerCase();
+  const minted = state.mints
+    .filter(
+      (m) =>
+        m.assetId === assetId &&
+        m.toWallet === normalized &&
+        m.status !== "failed",
+    )
+    .reduce((sum, m) => sum + m.amount, 0);
+  const received = state.transfers
+    .filter(
+      (t) =>
+        t.assetId === assetId &&
+        t.toWallet === normalized &&
+        t.status !== "failed",
+    )
+    .reduce((sum, t) => sum + t.amount, 0);
+  const sent = state.transfers
+    .filter(
+      (t) =>
+        t.assetId === assetId &&
+        t.fromWallet === normalized &&
+        t.status !== "failed",
+    )
+    .reduce((sum, t) => sum + t.amount, 0);
+  return minted + received - sent;
+}
+
+/** Find investor by email or wallet (case-insensitive). */
+export async function findInvestor(input: {
+  email?: string;
+  walletAddress?: string;
+}): Promise<Investor | undefined> {
+  await hydrate();
+  const state = getState();
+  return state.investors.find((i) => {
+    if (
+      input.email &&
+      i.email.toLowerCase() === input.email.toLowerCase()
+    ) {
+      return true;
+    }
+    if (
+      input.walletAddress &&
+      i.walletAddress.toLowerCase() === input.walletAddress.toLowerCase()
+    ) {
+      return true;
+    }
+    return false;
+  });
 }

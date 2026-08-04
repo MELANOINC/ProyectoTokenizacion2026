@@ -68,8 +68,9 @@ async function probeSupabase(): Promise<IntegrationProbe> {
       };
     }
 
-    // Prefer Notorius-specific tables; fall back to Melano platform schema.
+    // Prefer dedicated notorius_* tables; fall back to Melano platform schema.
     const restCandidates = [
+      "notorius_assets",
       "tokenization_assets",
       "tokenizations",
       "assets",

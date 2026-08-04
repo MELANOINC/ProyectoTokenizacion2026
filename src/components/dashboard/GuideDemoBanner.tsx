@@ -2,29 +2,28 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
-import { GUIDE_LESSONS, GUIDE_STORAGE_KEY } from "@/lib/guide";
+import { useMemo, useSyncExternalStore } from "react";
+import { GUIDE_LESSONS } from "@/lib/guide";
+import {
+  getGuideCompletedServerSnapshot,
+  getGuideCompletedSnapshot,
+  subscribeGuideCompleted,
+} from "@/lib/guide-storage";
 
 export function GuideDemoBanner() {
   const params = useSearchParams();
-  const [completed, setCompleted] = useState<string[]>([]);
   const fromGuide = params.get("from") === "guide";
   const lessonId = params.get("lesson");
   const complete = params.get("complete") === "1";
-
-  useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem(GUIDE_STORAGE_KEY);
-      const parsed = raw ? (JSON.parse(raw) as unknown) : [];
-      setCompleted(
-        Array.isArray(parsed)
-          ? parsed.filter((id): id is string => typeof id === "string")
-          : [],
-      );
-    } catch {
-      setCompleted([]);
-    }
-  }, []);
+  const completedRaw = useSyncExternalStore(
+    subscribeGuideCompleted,
+    getGuideCompletedSnapshot,
+    getGuideCompletedServerSnapshot,
+  );
+  const completed = useMemo(
+    () => JSON.parse(completedRaw) as string[],
+    [completedRaw],
+  );
 
   if (!fromGuide && completed.length === 0) return null;
 

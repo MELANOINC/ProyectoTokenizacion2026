@@ -10,7 +10,7 @@
     "start": "next start -H 0.0.0.0 -p ${PORT:-3000}",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test src/**/*.test.ts",
+    "test": "NODE_ENV=test NOTORIUS_FORCE_MEMORY=1 tsx --test src/**/*.test.ts",
     "check:env": "node scripts/check-env.mjs",
     "probe:integrations": "tsx scripts/probe-integrations.mjs",
     "compile:contracts": "node scripts/compile-contracts.mjs",

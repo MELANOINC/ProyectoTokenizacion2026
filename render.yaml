@@ -6,6 +6,34 @@ services:
     buildCommand: npm ci && npm run build
     startCommand: npm run start
     healthCheckPath: /api/health
+    domains:
+      - notorius.melanoinc.com
     envVars:
       - key: NODE_VERSION
         value: "22"
+      - key: NEXT_PUBLIC_APP_URL
+        value: https://notorius.melanoinc.com
+      - key: NEXT_PUBLIC_BASE_URL
+        value: https://notorius.melanoinc.com
+      - key: NEXT_PUBLIC_SUPABASE_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
+        sync: false
+      - key: NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+        sync: false
+      - key: MERCADOPAGO_CLIENT_ID
+        sync: false
+      - key: MERCADOPAGO_CLIENT_SECRET
+        sync: false
+      - key: MERCADOPAGO_ACCESS_TOKEN
+        sync: false
+      - key: MERCADOPAGO_PUBLIC_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: ECOSYSTEM_HANDOFF_SECRET
+        sync: false
+      - key: NOTORIUS_OPERATOR_KEY
+        sync: false

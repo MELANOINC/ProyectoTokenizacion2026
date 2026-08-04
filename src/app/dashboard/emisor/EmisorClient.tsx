@@ -79,11 +79,18 @@ export function EmisorClient() {
               type: "number",
               placeholder: "1000",
             },
+            {
+              name: "txHash",
+              label: "Tx hash on-chain",
+              placeholder: "0x… (requerido en producción)",
+              required: false,
+            },
           ]}
           transform={(values) => ({
             assetId: values.assetId,
             toWallet: values.toWallet,
             amount: Number(values.amount),
+            ...(values.txHash ? { txHash: values.txHash } : {}),
           })}
         />
       </div>
@@ -110,12 +117,19 @@ export function EmisorClient() {
               type: "number",
               placeholder: "100",
             },
+            {
+              name: "txHash",
+              label: "Tx hash on-chain",
+              placeholder: "0x… (requerido en producción)",
+              required: false,
+            },
           ]}
           transform={(values) => ({
             assetId: values.assetId,
             fromWallet: values.fromWallet,
             toWallet: values.toWallet,
             amount: Number(values.amount),
+            ...(values.txHash ? { txHash: values.txHash } : {}),
           })}
         />
       </div>

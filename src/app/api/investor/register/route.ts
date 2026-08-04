@@ -11,8 +11,6 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const denied = await requireAdminApi();
-  if (denied) return denied;
   try {
     const body = await request.json();
     const input = registerInvestorSchema.parse(body);

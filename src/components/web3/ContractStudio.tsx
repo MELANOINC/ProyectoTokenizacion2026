@@ -405,9 +405,25 @@ export function ContractStudio() {
         args: [investor as Address, mintWei],
         chainId,
       });
-      await trackTx(hash, "mint");
+      const receipt = await trackTx(hash, "mint");
       await Promise.all([tokenBalance.refetch(), mintedSupply.refetch()]);
-      setOk(`Mint OK: ${mintAmount} ${symbol.toUpperCase()}`);
+      try {
+        await fetch("/api/ledger/confirm", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            type: "mint",
+            assetId: "asset_puerto_madero",
+            txHash: hash,
+            blockNumber: Number(receipt.blockNumber),
+            toWallet: investor,
+            amount: Number(mintAmount),
+          }),
+        });
+      } catch {
+        // On-chain mint succeeded; ledger confirm is best-effort.
+      }
+      setOk(`Mint OK: ${mintAmount} ${symbol.toUpperCase()} · tx ${hash.slice(0, 10)}…`);
     } catch (error) {
       setErr(error);
     }
@@ -430,9 +446,26 @@ export function ContractStudio() {
         args: [transferTo as Address, transferWei],
         chainId,
       });
-      await trackTx(hash, "transfer");
+      const receipt = await trackTx(hash, "transfer");
       await tokenBalance.refetch();
-      setOk(`Transfer OK a ${transferTo}`);
+      try {
+        await fetch("/api/ledger/confirm", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            type: "transfer",
+            assetId: "asset_puerto_madero",
+            txHash: hash,
+            blockNumber: Number(receipt.blockNumber),
+            fromWallet: address,
+            toWallet: transferTo,
+            amount: Number(transferAmount),
+          }),
+        });
+      } catch {
+        // On-chain transfer succeeded; ledger confirm is best-effort.
+      }
+      setOk(`Transfer OK a ${transferTo} · tx ${hash.slice(0, 10)}…`);
     } catch (error) {
       setErr(error);
     }

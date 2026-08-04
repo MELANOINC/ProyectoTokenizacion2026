@@ -7,6 +7,7 @@ import { GuideDemoBanner } from "@/components/dashboard/GuideDemoBanner";
 const links = [
   { href: "/dashboard/contratos", label: "Contratos" },
   { href: "/dashboard", label: "Resumen" },
+  { href: "/dashboard/ecosistema", label: "Ecosistema" },
   { href: "/dashboard/admin", label: "Admin" },
   { href: "/dashboard/emisor", label: "Emisor" },
   { href: "/dashboard/inversores", label: "Inversores" },
