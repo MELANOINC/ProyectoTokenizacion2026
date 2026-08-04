@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Suspense, type ReactNode } from "react";
+import { AdminLogoutButton } from "@/components/admin/AdminLogoutButton";
 import { GuideDemoBanner } from "@/components/dashboard/GuideDemoBanner";
 
 const links = [
@@ -47,7 +48,7 @@ export function DashboardShell({
               </p>
             </div>
           </div>
-          <nav className="flex flex-wrap gap-2">
+          <nav className="flex flex-wrap items-center gap-2">
             {links.map((link) => (
               <Link
                 key={link.href}
@@ -57,6 +58,7 @@ export function DashboardShell({
                 {link.label}
               </Link>
             ))}
+            <AdminLogoutButton />
           </nav>
         </div>
       </header>

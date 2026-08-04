@@ -29,8 +29,13 @@ export const wagmiConfig = createConfig({
     metaMask({
       dappMetadata: {
         name: "NOTORIUS",
-        url: "https://notorius.app",
-        iconUrl: "https://notorius.app/favicon.ico",
+        url:
+          process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ||
+          ["https://notorius", "melanoinc.com"].join("."),
+        iconUrl: `${
+          process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ||
+          ["https://notorius", "melanoinc.com"].join(".")
+        }/icon-192.png`,
       },
     }),
     injected({ shimDisconnect: true }),

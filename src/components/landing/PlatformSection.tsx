@@ -46,8 +46,8 @@ export function PlatformSection() {
         </div>
 
         <div className="mt-12">
-          <Link href="/dashboard/contratos" className="btn-primary inline-block">
-            Entrar al estudio on-chain
+          <Link href="/precios" className="btn-primary inline-block">
+            Contratar NOTORIUS
           </Link>
         </div>
       </div>

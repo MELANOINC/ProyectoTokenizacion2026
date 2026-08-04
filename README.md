@@ -83,5 +83,6 @@ Surfaces: `/#ecosistema` · `/#guia` · `/dashboard/ecosistema`
 ## Notes
 
 - En producción configurá Supabase (tablas `notorius_*`) y `ECOSYSTEM_HANDOFF_SECRET`.
+- Persistencia opcional también documentada vía `NOTORIUS_SUPABASE_*` + `NOTORIUS_COMPANY_ID`. Sin Supabase, el store es in-memory (efímero).
 - Los contratos no están auditados.
 - Encuadre legal CNV: ver `docs/MANUAL-LEGAL.md`.

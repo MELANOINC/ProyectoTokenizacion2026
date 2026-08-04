@@ -1,9 +1,12 @@
+import { requireAdminApi } from "@/lib/admin/require-admin";
 import { authErrorStatus, requireOperator } from "@/lib/auth/operators";
 import { jsonError, jsonOk } from "@/lib/api";
 import { addToWhitelist, getSnapshot } from "@/lib/store";
 import { whitelistSchema } from "@/lib/validation";
 
 export async function GET() {
+  const denied = await requireAdminApi();
+  if (denied) return denied;
   const { whitelist } = await getSnapshot();
   return jsonOk({ whitelist });
 }

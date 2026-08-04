@@ -43,17 +43,20 @@ export function Hero() {
         </p>
 
         <div className="animate-rise-late mt-8 flex flex-wrap items-center gap-3">
+          <Link href="/precios" className="btn-primary">
+            Ver planes y comprar
+          </Link>
           <a
             href={CTA.calendly}
             target="_blank"
             rel="noopener noreferrer"
-            className="btn-primary"
+            className="btn-ghost relative"
           >
             Agendar diagnóstico
-          </a>
-          <Link href="#stack" className="btn-ghost relative">
-            Ver el stack
             <span className="cta-line absolute bottom-2 left-4 right-4 h-px bg-[var(--gold)]/70" />
+          </a>
+          <Link href="#stack" className="btn-ghost">
+            Ver el stack
           </Link>
         </div>
       </div>

@@ -1,8 +1,11 @@
+import { requireAdminApi } from "@/lib/admin/require-admin";
 import { jsonError, jsonOk } from "@/lib/api";
 import { getSnapshot, registerInvestor } from "@/lib/store";
 import { registerInvestorSchema } from "@/lib/validation";
 
 export async function GET() {
+  const denied = await requireAdminApi();
+  if (denied) return denied;
   const { investors } = await getSnapshot();
   return jsonOk({ investors });
 }

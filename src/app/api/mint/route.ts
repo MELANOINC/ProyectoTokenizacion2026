@@ -1,9 +1,12 @@
+import { requireAdminApi } from "@/lib/admin/require-admin";
 import { authErrorStatus, requireOperator } from "@/lib/auth/operators";
 import { jsonError, jsonOk } from "@/lib/api";
 import { getSnapshot, mintTokens } from "@/lib/store";
 import { mintSchema } from "@/lib/validation";
 
 export async function GET() {
+  const denied = await requireAdminApi();
+  if (denied) return denied;
   const { mints } = await getSnapshot();
   return jsonOk({ mints });
 }
