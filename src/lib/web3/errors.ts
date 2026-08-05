@@ -40,12 +40,26 @@ export function formatWalletError(error: unknown): string {
     return "Red incorrecta. Cambiá a Polygon Amoy o Polygon Mainnet.";
   }
 
+  if (
+    /requested resource not available|rpc.*unavailable|could not coalesce|failed to fetch|network error|http request failed/i.test(
+      raw,
+    )
+  ) {
+    return "RPC de Polygon no disponible. Recargá la página, verificá que MetaMask esté en Amoy/Mainnet y reintentá el deploy.";
+  }
+
   if (/insufficient funds|gas/i.test(raw)) {
     return "Fondos insuficientes de MATIC para gas en esta red.";
   }
 
-  if (/NOT_WHITELISTED|NOT_KYC|EXCEEDS_SUPPLY|NOT_OWNER|ZERO_ADDRESS/i.test(raw)) {
-    return `Requisito on-chain: ${raw.match(/NOT_WHITELISTED|NOT_KYC|EXCEEDS_SUPPLY|NOT_OWNER|ZERO_ADDRESS/)?.[0]}`;
+  const onChainCode = raw.match(
+    /MISSING_ROLE|NOT_WHITELISTED|NOT_KYC|EXCEEDS_SUPPLY|NOT_OWNER|NOT_COMPLIANCE|UNKNOWN_ROLE|REVOKE_OWNER|ZERO_ADDRESS|ZERO_REGISTRY|ALLOWANCE|BALANCE/,
+  )?.[0];
+  if (onChainCode) {
+    if (onChainCode === "MISSING_ROLE" || onChainCode === "NOT_COMPLIANCE") {
+      return "Falta rol on-chain (ADMIN/COMPLIANCE/ISSUER). El deployer recibe todos los roles; usá la misma wallet que desplegó el contrato.";
+    }
+    return `Requisito on-chain: ${onChainCode}`;
   }
 
   return raw.length > 220 ? `${raw.slice(0, 220)}…` : raw;

@@ -608,6 +608,11 @@ export function ContractStudio() {
                 ? formatUnits(tokenBalance.data as bigint, 18)
                 : "0"}
             </p>
+            <p className="text-xs text-[var(--ink-soft)]">
+              Roles: el deployer recibe ADMIN + COMPLIANCE (+ ISSUER en el
+              token). KYC/whitelist requieren COMPLIANCE; mint requiere ISSUER.
+              Usá la misma wallet que desplegó los contratos.
+            </p>
             <button
               type="button"
               disabled={!networkReady || busy || !registryAddress}

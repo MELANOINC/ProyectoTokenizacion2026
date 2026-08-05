@@ -54,3 +54,14 @@ export const createAssetSchema = z.object({
   issuerId: z.string().min(1),
   chain: z.enum(["polygon", "base"]).default("polygon"),
 });
+
+export const handoffSchema = z.object({
+  source: z.enum(["alenya", "luxia", "brunomelano", "manual"]),
+  externalId: z.string().min(1).max(120).optional(),
+  name: z.string().min(2).max(120),
+  email: z.string().email(),
+  phone: z.string().min(6).max(40).optional(),
+  walletAddress: ethAddress,
+  assetId: z.string().min(1).optional(),
+  payload: z.record(z.string(), z.unknown()).optional(),
+});
