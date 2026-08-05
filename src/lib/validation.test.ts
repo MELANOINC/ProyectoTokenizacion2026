@@ -54,6 +54,19 @@ describe("validation schemas", () => {
     );
   });
 
+  it("accepts optional on-chain txHash on mint", () => {
+    const wallet = "0x2222222222222222222222222222222222222222";
+    const hash =
+      "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    const parsed = mintSchema.parse({
+      assetId: "asset_1",
+      toWallet: wallet,
+      amount: 5,
+      txHash: hash,
+    });
+    assert.equal(parsed.txHash, hash);
+  });
+
   it("normalizes asset creation defaults", () => {
     const asset = createAssetSchema.parse({
       name: "Torre Demo",

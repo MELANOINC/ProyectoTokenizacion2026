@@ -11,7 +11,7 @@ export default async function InversoresPage() {
   return (
     <DashboardShell
       title="Inversores"
-      subtitle="Onboarding, KYC simulado y whitelist por activo para transferencias controladas."
+      subtitle="Registro de inversores. KYC se aprueba en Admin; whitelist solo post-KYC."
     >
       <InversoresClient />
 

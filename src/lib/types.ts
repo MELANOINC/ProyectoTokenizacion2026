@@ -9,6 +9,9 @@ export type KycStatus = "pending" | "approved" | "rejected";
 
 export type ChainId = "polygon" | "base";
 
+/** onchain = real Polygon tx; demo = simulated ledger (labeled in UI). */
+export type LedgerSource = "onchain" | "demo";
+
 export interface TokenizedAsset {
   id: string;
   name: string;
@@ -46,6 +49,7 @@ export interface MintRecord {
   toWallet: string;
   amount: number;
   txHash: string;
+  ledgerSource: LedgerSource;
   createdAt: string;
 }
 
@@ -56,6 +60,7 @@ export interface TransferRecord {
   toWallet: string;
   amount: number;
   txHash: string;
+  ledgerSource: LedgerSource;
   createdAt: string;
 }
 

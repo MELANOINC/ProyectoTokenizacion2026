@@ -1,61 +1,38 @@
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
-import { DataTable } from "@/components/dashboard/DataTable";
 import { StatRow } from "@/components/dashboard/StatRow";
 import { getSnapshot } from "@/lib/store";
+import { AdminClient } from "./AdminClient";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
   const state = await getSnapshot();
   const approved = state.investors.filter((i) => i.kycStatus === "approved").length;
+  const pending = state.investors.filter((i) => i.kycStatus === "pending").length;
+  const onchainMints = state.mints.filter((m) => m.ledgerSource === "onchain").length;
+  const demoMints = state.mints.filter((m) => m.ledgerSource === "demo").length;
 
   return (
     <DashboardShell
       title="Admin"
-      subtitle="Gobierno de plataforma: KYC, whitelist e historial on-chain consolidado."
+      subtitle="Gobierno: KYC approve/reject, whitelist post-KYC. Ledger etiquetado DEMO vs ON-CHAIN."
     >
       <StatRow
         items={[
           { label: "KYC aprobados", value: approved },
-          {
-            label: "KYC pendientes",
-            value: state.investors.length - approved,
-          },
-          { label: "Mints", value: state.mints.length },
-          { label: "Transfers", value: state.transfers.length },
+          { label: "KYC pendientes", value: pending },
+          { label: "Mints on-chain", value: onchainMints },
+          { label: "Mints demo", value: demoMints },
         ]}
       />
 
-      <section className="mt-12 space-y-4">
-        <h2 className="font-[family-name:var(--font-display)] text-2xl font-bold">
-          Inversores
-        </h2>
-        <DataTable
-          columns={["Nombre", "Email", "Wallet", "KYC", "Whitelist"]}
-          rows={state.investors.map((investor) => [
-            investor.name,
-            investor.email,
-            `${investor.walletAddress.slice(0, 12)}…`,
-            investor.kycStatus,
-            investor.whitelisted ? "Sí" : "No",
-          ])}
+      <div className="mt-12">
+        <AdminClient
+          investors={state.investors}
+          whitelist={state.whitelist}
+          assets={state.assets.map((a) => ({ id: a.id, symbol: a.symbol }))}
         />
-      </section>
-
-      <section className="mt-12 space-y-4">
-        <h2 className="font-[family-name:var(--font-display)] text-2xl font-bold">
-          Whitelist
-        </h2>
-        <DataTable
-          columns={["Asset", "Investor", "Wallet", "Alta"]}
-          rows={state.whitelist.map((entry) => [
-            entry.assetId,
-            entry.investorId,
-            `${entry.walletAddress.slice(0, 12)}…`,
-            new Date(entry.createdAt).toLocaleString("es-AR"),
-          ])}
-        />
-      </section>
+      </div>
     </DashboardShell>
   );
 }

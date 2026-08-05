@@ -11,6 +11,8 @@ import {
 } from "@/lib/supabase/repository";
 import type {
   Investor,
+  KycStatus,
+  LedgerSource,
   MintRecord,
   PlatformState,
   TokenizedAsset,
@@ -19,10 +21,12 @@ import type {
 } from "@/lib/types";
 import { randomUUID } from "crypto";
 
+const TX_HASH_RE = /^0x[a-fA-F0-9]{64}$/;
+
 /**
- * Platform store: in-memory with optional Supabase dual-write
- * (assets / investors / tokenizations / investments).
- * Whitelist + transfers stay in-memory until dedicated tables exist.
+ * Platform store: in-memory with optional Supabase dual-write.
+ * Mint/transfer without txHash are labeled DEMO; with real txHash = ON-CHAIN.
+ * KYC must be approved before whitelist (no auto-approve).
  */
 const globalForStore = globalThis as typeof globalThis & {
   __notoriusStore?: PlatformState;
@@ -32,6 +36,23 @@ const globalForStore = globalThis as typeof globalThis & {
 function entityId(prefix: string): string {
   if (getSupabaseConfig()) return randomUUID();
   return createId(prefix);
+}
+
+function assertTxHash(txHash: string): string {
+  if (!TX_HASH_RE.test(txHash)) {
+    throw new Error("Invalid txHash — expected 0x + 64 hex chars");
+  }
+  return txHash.toLowerCase();
+}
+
+function resolveLedger(txHash?: string): {
+  txHash: string;
+  ledgerSource: LedgerSource;
+} {
+  if (txHash && txHash.trim()) {
+    return { txHash: assertTxHash(txHash.trim()), ledgerSource: "onchain" };
+  }
+  return { txHash: createTxHash(), ledgerSource: "demo" };
 }
 
 function seedState(): PlatformState {
@@ -85,6 +106,7 @@ function seedState(): PlatformState {
     toWallet: investor.walletAddress,
     amount: 125_000,
     txHash: "0xabc123def456abc123def456abc123def456abc123def456abc123def456abcd",
+    ledgerSource: "demo",
     createdAt: new Date("2026-06-04T12:00:00.000Z").toISOString(),
   };
 
@@ -205,6 +227,27 @@ export async function registerInvestor(input: {
   return investor;
 }
 
+/** Compliance action — does not auto-approve via whitelist. */
+export async function setKycStatus(
+  investorId: string,
+  status: Extract<KycStatus, "approved" | "rejected">,
+): Promise<Investor> {
+  const state = await ensureReady();
+  const investor = state.investors.find((i) => i.id === investorId);
+  if (!investor) throw new Error("Investor not found");
+
+  investor.kycStatus = status;
+  if (status === "rejected") {
+    investor.whitelisted = false;
+    state.whitelist = state.whitelist.filter(
+      (w) => w.investorId !== investor.id,
+    );
+  }
+
+  await persistInvestorKyc(investor.id, status).catch(() => undefined);
+  return { ...investor };
+}
+
 export async function addToWhitelist(input: {
   investorId: string;
   assetId: string;
@@ -214,8 +257,7 @@ export async function addToWhitelist(input: {
   const investor = state.investors.find((i) => i.id === input.investorId);
   if (!investor) throw new Error("Investor not found");
   if (investor.kycStatus !== "approved") {
-    investor.kycStatus = "approved";
-    await persistInvestorKyc(investor.id, "approved").catch(() => undefined);
+    throw new Error("KYC must be approved before whitelist");
   }
 
   const asset = state.assets.find((a) => a.id === input.assetId);
@@ -246,6 +288,8 @@ export async function mintTokens(input: {
   assetId: string;
   toWallet: string;
   amount: number;
+  /** Real Polygon tx hash → ledgerSource onchain; omit → labeled demo. */
+  txHash?: string;
 }): Promise<MintRecord> {
   const state = await ensureReady();
   const asset = state.assets.find((a) => a.id === input.assetId);
@@ -268,13 +312,15 @@ export async function mintTokens(input: {
     asset.contractAddress = createContractAddress();
   }
 
+  const ledger = resolveLedger(input.txHash);
   asset.mintedSupply += input.amount;
   const record: MintRecord = {
     id: entityId("mint"),
     assetId: asset.id,
     toWallet: wallet,
     amount: input.amount,
-    txHash: createTxHash(),
+    txHash: ledger.txHash,
+    ledgerSource: ledger.ledgerSource,
     createdAt: new Date().toISOString(),
   };
   state.mints.unshift(record);
@@ -300,6 +346,7 @@ export async function transferTokens(input: {
   fromWallet: string;
   toWallet: string;
   amount: number;
+  txHash?: string;
 }): Promise<TransferRecord> {
   const state = await ensureReady();
   const asset = state.assets.find((a) => a.id === input.assetId);
@@ -323,13 +370,15 @@ export async function transferTokens(input: {
     throw new Error("Insufficient token balance");
   }
 
+  const ledger = resolveLedger(input.txHash);
   const record: TransferRecord = {
     id: entityId("xfer"),
     assetId: asset.id,
     fromWallet: from,
     toWallet: to,
     amount: input.amount,
-    txHash: createTxHash(),
+    txHash: ledger.txHash,
+    ledgerSource: ledger.ledgerSource,
     createdAt: new Date().toISOString(),
   };
   state.transfers.unshift(record);

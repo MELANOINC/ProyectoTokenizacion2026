@@ -79,11 +79,18 @@ export function EmisorClient() {
               type: "number",
               placeholder: "1000",
             },
+            {
+              name: "txHash",
+              label: "Tx hash on-chain (opcional)",
+              placeholder: "0x…64 hex — vacío = mint DEMO etiquetado",
+              required: false,
+            },
           ]}
           transform={(values) => ({
             assetId: values.assetId,
             toWallet: values.toWallet,
             amount: Number(values.amount),
+            ...(values.txHash?.trim() ? { txHash: values.txHash.trim() } : {}),
           })}
         />
       </div>
@@ -110,12 +117,19 @@ export function EmisorClient() {
               type: "number",
               placeholder: "100",
             },
+            {
+              name: "txHash",
+              label: "Tx hash on-chain (opcional)",
+              placeholder: "0x…64 hex — vacío = transfer DEMO etiquetado",
+              required: false,
+            },
           ]}
           transform={(values) => ({
             assetId: values.assetId,
             fromWallet: values.fromWallet,
             toWallet: values.toWallet,
             amount: Number(values.amount),
+            ...(values.txHash?.trim() ? { txHash: values.txHash.trim() } : {}),
           })}
         />
       </div>

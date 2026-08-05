@@ -37,17 +37,20 @@ export default async function DashboardPage() {
         items={[
           { label: "Activos", value: state.assets.length },
           { label: "Inversores", value: state.investors.length },
-          { label: "Whitelist", value: state.whitelist.length },
           {
-            label: "Ops demo API",
-            value: state.mints.length + state.transfers.length,
+            label: "Mints on-chain",
+            value: state.mints.filter((m) => m.ledgerSource === "onchain").length,
+          },
+          {
+            label: "Mints demo",
+            value: state.mints.filter((m) => m.ledgerSource === "demo").length,
           },
         ]}
       />
 
       <section className="mt-12 space-y-4">
         <h2 className="font-[family-name:var(--font-display)] text-2xl font-bold">
-          Activos tokenizados (demo API)
+          Activos tokenizados
         </h2>
         <DataTable
           columns={["Nombre", "Símbolo", "Chain", "Minted", "Supply", "Contrato"]}

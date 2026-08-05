@@ -16,10 +16,17 @@ export const whitelistSchema = z.object({
   walletAddress: ethAddress.optional(),
 });
 
+const txHash = z
+  .string()
+  .regex(/^0x[a-fA-F0-9]{64}$/, "Invalid tx hash")
+  .optional();
+
 export const mintSchema = z.object({
   assetId: z.string().min(1),
   toWallet: ethAddress,
   amount: z.number().positive().finite(),
+  /** Real on-chain hash. Omit to record a labeled demo mint. */
+  txHash,
 });
 
 export const transferSchema = z.object({
@@ -27,6 +34,12 @@ export const transferSchema = z.object({
   fromWallet: ethAddress,
   toWallet: ethAddress,
   amount: z.number().positive().finite(),
+  txHash,
+});
+
+export const kycDecisionSchema = z.object({
+  investorId: z.string().min(1),
+  status: z.enum(["approved", "rejected"]),
 });
 
 export const createAssetSchema = z.object({

@@ -36,10 +36,10 @@ export function InversoresClient() {
 
       <div>
         <h2 className="mb-3 font-[family-name:var(--font-display)] text-2xl font-bold">
-          Whitelist + KYC
+          Whitelist (requiere KYC aprobado en Admin)
         </h2>
         <ActionForm
-          actionLabel="Aprobar y whitelistear"
+          actionLabel="Agregar a whitelist"
           endpoint="/api/whitelist"
           onSuccess={refresh}
           fields={[

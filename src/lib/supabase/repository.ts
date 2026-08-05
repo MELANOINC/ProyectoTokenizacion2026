@@ -186,6 +186,7 @@ export async function loadPlatformFromSupabase(): Promise<{
         toWallet: (inv?.wallet_address ?? "").toLowerCase(),
         amount: num(row.tokens_purchased),
         txHash: `supabase:${row.id}`,
+        ledgerSource: "demo" as const,
         createdAt: row.created_at,
       };
     });
@@ -215,6 +216,9 @@ export async function loadPlatformFromSupabase(): Promise<{
         toWallet: String(m.toWallet ?? "").toLowerCase(),
         amount: num(m.amount as number | string | null | undefined),
         txHash: String(m.txHash ?? `supabase:${row.id}`),
+        ledgerSource: (String(m.txHash ?? "").match(/^0x[a-fA-F0-9]{64}$/)
+          ? "onchain"
+          : "demo") as "onchain" | "demo",
         createdAt: String(m.createdAt ?? row.created_at),
       };
     })

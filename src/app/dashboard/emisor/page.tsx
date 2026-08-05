@@ -11,7 +11,7 @@ export default async function EmisorPage() {
   return (
     <DashboardShell
       title="Emisor"
-      subtitle="Alta de activos, mint hacia wallets whitelistadas y transferencias controladas."
+      subtitle="Alta de activos, mint/transfer. Sin txHash = DEMO etiquetado; con txHash = ON-CHAIN."
     >
       <EmisorClient />
 
@@ -36,8 +36,9 @@ export default async function EmisorPage() {
           Mints
         </h2>
         <DataTable
-          columns={["Asset", "Wallet", "Amount", "Tx"]}
+          columns={["Fuente", "Asset", "Wallet", "Amount", "Tx"]}
           rows={mints.map((mint) => [
+            mint.ledgerSource === "onchain" ? "ON-CHAIN" : "DEMO",
             mint.assetId,
             `${mint.toWallet.slice(0, 12)}…`,
             mint.amount.toLocaleString("es-AR"),
