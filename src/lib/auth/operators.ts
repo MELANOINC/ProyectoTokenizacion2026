@@ -13,9 +13,11 @@ export type OperatorContext = {
  * Returns null until session wiring is completed; callers should 401.
  */
 export async function requireOperator(
-  _request: Request | NextRequest,
-  _roles?: OperatorRole | OperatorRole[],
+  request: Request | NextRequest,
+  roles?: OperatorRole | OperatorRole[],
 ): Promise<OperatorContext | null> {
+  void request;
+  void roles;
   // TODO: read Supabase session (cookie/Bearer) and join notorius_operators.
   return null;
 }
