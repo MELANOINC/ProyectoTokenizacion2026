@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { CTA } from "@/lib/cta";
 
 const capabilities = [
   {
@@ -46,9 +46,14 @@ export function PlatformSection() {
         </div>
 
         <div className="mt-12">
-          <Link href="/precios" className="btn-primary inline-block">
-            Contratar NOTORIUS
-          </Link>
+          <a
+            href={CTA.calendly}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-primary inline-block"
+          >
+            Agendar diagnóstico
+          </a>
         </div>
       </div>
     </section>
