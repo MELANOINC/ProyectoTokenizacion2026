@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { GUIDE_LESSONS, GUIDE_STORAGE_KEY, type GuideLesson } from "@/lib/guide";
 
@@ -125,12 +124,14 @@ export function GuideSection() {
               >
                 {isDone ? "Ya marcado · siguiente" : "Marcar en demo"}
               </button>
-              <Link
-                href={`/precios`}
+              <a
+                href="https://wa.me/5492235506585"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="rounded-full border border-[var(--line)] px-5 py-2.5 text-sm font-medium text-[var(--w2)] transition hover:border-[var(--neon)] hover:text-[var(--w)]"
               >
-                Ver planes
-              </Link>
+                Consultar implementación
+              </a>
               {flash ? (
                 <span className="font-mono text-xs tracking-wider text-[var(--mint)]">
                   {flash}
@@ -141,12 +142,14 @@ export function GuideSection() {
             {allDone ? (
               <p className="mt-4 text-sm text-[var(--mint)]">
                 Guía completa.{" "}
-                <Link
-                  href="/comprar?plan=notorius-piloto"
+                <a
+                  href="https://wa.me/5492235506585"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="underline underline-offset-4"
                 >
-                  Contratar piloto NOTORIUS
-                </Link>
+                  Solicitar diagnóstico NOTORIUS
+                </a>
               </p>
             ) : null}
           </article>
