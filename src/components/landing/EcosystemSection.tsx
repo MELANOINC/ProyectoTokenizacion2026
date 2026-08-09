@@ -14,7 +14,7 @@ const agents = [
   {
     name: "NOTORIUS",
     role: "Tokeniza y emite",
-    href: "/precios",
+    href: "#plataforma",
     body: "Smart contracts, KYC on-chain, mint y transferencias controladas.",
     current: true,
   },
