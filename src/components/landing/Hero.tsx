@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { CTA } from "@/lib/cta";
 
 export function Hero() {
@@ -42,21 +43,16 @@ export function Hero() {
         </p>
 
         <div className="animate-rise-late mt-8 flex flex-wrap items-center gap-3">
+          <Link href="/miami" className="btn-primary">
+            Miami Founding Pilot · 5 Spots
+          </Link>
           <a
             href={CTA.whatsapp}
             target="_blank"
             rel="noopener noreferrer"
-            className="btn-primary"
-          >
-            Consultar implementación
-          </a>
-          <a
-            href={CTA.calendly}
-            target="_blank"
-            rel="noopener noreferrer"
             className="btn-ghost relative"
           >
-            Agendar diagnóstico
+            Consultar implementación
             <span className="cta-line absolute bottom-2 left-4 right-4 h-px bg-[var(--gold)]/70" />
           </a>
         </div>
