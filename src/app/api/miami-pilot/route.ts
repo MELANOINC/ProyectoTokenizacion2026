@@ -21,6 +21,20 @@ const schema = z.object({
   utm_campaign: z.string().trim().max(160).optional().default("NOTORIUS_MIAMI_PILOT"),
 });
 
+export async function GET() {
+  try {
+    const supabase = getAlenyaSupabase();
+    const { data, error } = await supabase.rpc("notorius_miami_pilot_health");
+    if (error) {
+      return NextResponse.json({ ok: false, service: "notorius-miami-pilot", error: "CRM unavailable" }, { status: 503 });
+    }
+    return NextResponse.json({ ok: true, service: "notorius-miami-pilot", crm: data }, { status: 200 });
+  } catch (error) {
+    console.error("NOTORIUS Miami health error", error);
+    return NextResponse.json({ ok: false, service: "notorius-miami-pilot", error: "Health check failed" }, { status: 503 });
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const raw = await req.json();
