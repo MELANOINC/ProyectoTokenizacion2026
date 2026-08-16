@@ -1,6 +1,3 @@
-import Link from "next/link";
-import { CTA } from "@/lib/cta";
-
 export function Hero() {
   return (
     <section className="relative min-h-[100svh] overflow-hidden">
@@ -23,37 +20,21 @@ export function Hero() {
       <div className="melano-orb absolute inset-0 opacity-80" aria-hidden />
 
       <div className="relative z-10 mx-auto flex min-h-[100svh] w-full max-w-6xl flex-col justify-end px-6 pb-16 pt-28 md:px-10 md:pb-24">
-        <div className="animate-rise mb-5 inline-flex w-fit items-center gap-2 rounded-full border border-[var(--mint-b)] bg-[var(--mint-bg)] px-3 py-1 text-xs font-medium tracking-[0.14em] text-[var(--mint)] uppercase">
-          <span className="h-1.5 w-1.5 rounded-full bg-[var(--mint)] [animation:pulse-dot_1.6s_ease_infinite]" />
-          Agente tokenizador activo
+        <div className="animate-rise mb-5 inline-flex w-fit items-center gap-2 rounded-full border border-[var(--gold-lo)] bg-[var(--gold-bg)] px-3 py-1 text-xs font-medium tracking-[0.14em] text-[var(--gold)] uppercase">
+          Próximamente
         </div>
 
         <p className="animate-rise font-[family-name:var(--font-display)] text-[clamp(3.2rem,11vw,7.5rem)] font-extrabold leading-[0.9] tracking-[-0.04em] text-[var(--w)]">
           NOTORIUS
         </p>
 
-        <h1 className="animate-rise-delay mt-5 max-w-2xl font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight text-[var(--w)] md:text-3xl">
-          El agente que tokeniza propiedades y activos reales.
+        <h1 className="animate-rise-delay mt-5 max-w-3xl font-[family-name:var(--font-display)] text-3xl font-semibold leading-tight text-[var(--w)] md:text-5xl">
+          Se viene NOTORIUS.
         </h1>
 
-        <p className="animate-rise-late mt-4 max-w-xl text-base leading-relaxed text-[var(--w2)] md:text-lg">
-          Convertí propiedades y activos reales en oportunidades digitales listas para operar.
+        <p className="animate-rise-late mt-4 max-w-2xl text-lg leading-relaxed text-[var(--w2)] md:text-2xl">
+          La nueva era de la tokenización de activos reales está por comenzar.
         </p>
-
-        <div className="animate-rise-late mt-8 flex flex-wrap items-center gap-3">
-          <Link href="/miami" className="btn-primary">
-            Miami Founding Pilot · 5 Spots
-          </Link>
-          <a
-            href={CTA.whatsapp}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-ghost relative"
-          >
-            Consultar implementación
-            <span className="cta-line absolute bottom-2 left-4 right-4 h-px bg-[var(--gold)]/70" />
-          </a>
-        </div>
       </div>
     </section>
   );

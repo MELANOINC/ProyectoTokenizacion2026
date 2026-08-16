@@ -23,7 +23,7 @@ export const SITE_TITLE =
 
 /** ~155 chars — primary meta description */
 export const SITE_DESCRIPTION =
-  "Tokenizá propiedades y activos reales en Polygon: firma EIP-712, KYC, whitelist, mint y transferencias controladas. Hub Melano: Alenya capta, Luxia convierte, NOTORIUS tokeniza.";
+  "NOTORIUS está por llegar: una nueva generación para tokenizar propiedades y activos reales.";
 
 export const SITE_TAGLINE =
   "Agente tokenizador de propiedades y activos reales para inmobiliarias y emisores.";
@@ -52,15 +52,11 @@ export const SITE_KEYWORDS = [
   "KYC",
   "whitelist",
   "Melano Inc",
-  "Luxia",
-  "Alenya",
   "Argentina",
   "inmobiliarias",
 ] as const;
 
 const MELANO_HOME = ["https://melanoinc", "com"].join(".");
-const LUXIA_HOME = ["https://luxia", "melanoinc.com"].join(".");
-const ALENYA_HOME = ["https://alenya", "melanoinc.com"].join(".");
 
 export function absoluteUrl(path = "/"): string {
   if (path.startsWith("http")) return path;
@@ -141,7 +137,7 @@ export function organizationJsonLd() {
       width: 512,
       height: 512,
     },
-    sameAs: [LUXIA_HOME, ALENYA_HOME, SITE_URL],
+    sameAs: [SITE_URL],
     brand: {
       "@type": "Brand",
       name: SITE_BRAND,
@@ -235,14 +231,6 @@ export function faqJsonLd() {
         acceptedAnswer: {
           "@type": "Answer",
           text: "NOTORIUS es el agente tokenizador de Melano Inc: convierte propiedades y activos reales en security tokens con smart contracts, KYC, whitelist y emisión controlada en Polygon.",
-        },
-      },
-      {
-        "@type": "Question",
-        name: "¿Cómo se integra con Luxia y Alenya?",
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: "En el hub Melano, Alenya capta y califica leads, Luxia opera la conversión comercial y NOTORIUS tokeniza el activo con el mismo estándar operativo.",
         },
       },
       {
