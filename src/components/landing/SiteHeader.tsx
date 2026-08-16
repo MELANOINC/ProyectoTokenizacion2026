@@ -24,23 +24,6 @@ export function SiteHeader() {
           </span>
         </Link>
 
-        <nav className="flex items-center gap-2 text-sm text-[var(--w2)] md:gap-4">
-          <Link href="#guia" className="hidden hover:text-[var(--w)] sm:inline">
-            Guía
-          </Link>
-          <Link href="#plataforma" className="hidden hover:text-[var(--w)] sm:inline">
-            Plataforma
-          </Link>
-          <Link href="#ecosistema" className="hidden hover:text-[var(--w)] md:inline">
-            Ecosistema
-          </Link>
-          <Link
-            href="/miami"
-            className="border border-[var(--gold-lo)] bg-[var(--gold)] px-4 py-2 font-semibold text-[#14110a] transition hover:bg-[var(--gold-hi)]"
-          >
-            Miami Pilot · 5 Spots
-          </Link>
-        </nav>
       </div>
     </header>
   );
