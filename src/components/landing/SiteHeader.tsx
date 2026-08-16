@@ -25,9 +25,6 @@ export function SiteHeader() {
         </Link>
 
         <nav className="flex items-center gap-2 text-sm text-[var(--w2)] md:gap-4">
-          <Link href="#guia" className="hidden hover:text-[var(--w)] sm:inline">
-            Guía
-          </Link>
           <Link href="#plataforma" className="hidden hover:text-[var(--w)] sm:inline">
             Plataforma
           </Link>

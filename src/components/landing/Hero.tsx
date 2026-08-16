@@ -37,9 +37,7 @@ export function Hero() {
         </h1>
 
         <p className="animate-rise-late mt-4 max-w-xl text-base leading-relaxed text-[var(--w2)] md:text-lg">
-          Del deed al security token: firmá acuerdos, desplegá contratos en
-          Polygon, gestioná KYC/whitelist y emití con control — en el mismo
-          estándar operativo que Luxia y Alenya.
+          Convertí propiedades y activos reales en oportunidades digitales listas para operar.
         </p>
 
         <div className="animate-rise-late mt-8 flex flex-wrap items-center gap-3">
