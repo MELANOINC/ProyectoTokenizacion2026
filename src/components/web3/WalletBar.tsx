@@ -8,7 +8,7 @@ import {
   useDisconnect,
   useSwitchChain,
 } from "wagmi";
-import { polygon, polygonAmoy } from "wagmi/chains";
+import { polygon } from "wagmi/chains";
 import { chainMeta } from "@/lib/web3/config";
 import { formatWalletError, isMetaMaskInstalled } from "@/lib/web3/errors";
 
@@ -49,7 +49,7 @@ export function WalletBar() {
     });
   }, [connectors]);
 
-  const supported = chainId === polygonAmoy.id || chainId === polygon.id;
+  const supported = chainId === polygon.id;
   const meta = chainMeta[chainId];
 
   async function onConnect() {
@@ -69,7 +69,7 @@ export function WalletBar() {
     let lastError: unknown;
     for (const connector of preferredConnectors) {
       try {
-        await connectAsync({ connector, chainId: polygonAmoy.id });
+        await connectAsync({ connector, chainId: polygon.id });
         return;
       } catch (error) {
         lastError = error;
@@ -111,7 +111,7 @@ export function WalletBar() {
               ? supported
                 ? meta?.label
                 : `Red no soportada (chainId ${chainId})`
-              : "Conectá MetaMask en Polygon Amoy o Mainnet"}
+              : "Conectá MetaMask en Polygon Mainnet"}
           </p>
         </div>
 
@@ -125,28 +125,18 @@ export function WalletBar() {
             >
               {isPending || status === "connecting"
                 ? "Conectando…"
-                : "Conectar MetaMask"}
+                : "Conectar MetaMask · Mainnet"}
             </button>
           ) : (
             <>
-              {!supported || chainId !== polygonAmoy.id ? (
-                <button
-                  type="button"
-                  disabled={isSwitching}
-                  onClick={() => switchChain({ chainId: polygonAmoy.id })}
-                  className="border border-[var(--line)] px-3 py-2 text-sm text-[var(--ink)] hover:border-[var(--ink)]"
-                >
-                  {isSwitching ? "Cambiando…" : "Usar Amoy"}
-                </button>
-              ) : null}
-              {chainId !== polygon.id ? (
+              {!supported ? (
                 <button
                   type="button"
                   disabled={isSwitching}
                   onClick={() => switchChain({ chainId: polygon.id })}
                   className="border border-[var(--line)] px-3 py-2 text-sm text-[var(--ink)] hover:border-[var(--ink)]"
                 >
-                  Usar Mainnet
+                  {isSwitching ? "Cambiando…" : "Usar Polygon Mainnet"}
                 </button>
               ) : null}
               <button
@@ -160,21 +150,6 @@ export function WalletBar() {
           )}
         </div>
       </div>
-
-      {meta?.faucet ? (
-        <p className="text-sm text-[var(--slate)]">
-          ¿Sin gas? Pedí MATIC de prueba en{" "}
-          <a
-            href={meta.faucet}
-            target="_blank"
-            rel="noreferrer"
-            className="underline decoration-[var(--brass)] underline-offset-2"
-          >
-            el faucet de Polygon
-          </a>
-          .
-        </p>
-      ) : null}
 
       {errorMessage ? (
         <p className="border border-[#8a3b3b] bg-[#2a1515] px-3 py-2 text-sm text-[#fca5a5]">
