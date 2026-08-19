@@ -1,25 +1,20 @@
 import { http, createConfig } from "wagmi";
 import { injected, metaMask } from "wagmi/connectors";
-import { polygon, polygonAmoy } from "wagmi/chains";
+import { polygon } from "wagmi/chains";
 
-export const supportedChains = [polygonAmoy, polygon] as const;
+// Production policy: NOTORIUS operates on Polygon Mainnet only.
+export const supportedChains = [polygon] as const;
 
-export const DEFAULT_CHAIN_ID = polygonAmoy.id;
+export const DEFAULT_CHAIN_ID = polygon.id;
 
 export const chainMeta: Record<
   number,
-  { label: string; explorer: string; faucet?: string; native: string }
+  { label: string; explorer: string; native: string }
 > = {
-  [polygonAmoy.id]: {
-    label: "Polygon Amoy",
-    explorer: "https://amoy.polygonscan.com",
-    faucet: "https://faucet.polygon.technology/",
-    native: "MATIC",
-  },
   [polygon.id]: {
     label: "Polygon Mainnet",
     explorer: "https://polygonscan.com",
-    native: "MATIC",
+    native: "POL",
   },
 };
 
@@ -41,7 +36,6 @@ export const wagmiConfig = createConfig({
     injected({ shimDisconnect: true }),
   ],
   transports: {
-    [polygonAmoy.id]: http("https://rpc-amoy.polygon.technology"),
     [polygon.id]: http("https://polygon-rpc.com"),
   },
   ssr: true,
